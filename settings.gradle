@@ -1,0 +1,4 @@
+rootProject.name = 'nordnetservice'
+includeFlat 'oahu'
+includeFlat 'vega'
+includeFlat 'critter-repos'
