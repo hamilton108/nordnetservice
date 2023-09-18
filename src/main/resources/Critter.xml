@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="nordnetservice.critter.mybatis.CritterMapper">
+
+    <resultMap id="ruleTypeMap" type="nordnetservice.critter.critterrule.RuleType">
+        <id column="oid" property="oid" />
+        <result column="description" property="desc" />
+    </resultMap>
+
+    <select id="ruleTypes" resultMap="ruleTypeMap">
+        select * from stockmarket.rule_types order by oid
+    </select>
+
+
+    <resultMap id="purchaseResultMap" type="nordnetservice.critter.stockoption.StockOptionPurchase">
+        <id column="oid" property="oid"/>
+        <result column="dx" property="dx"/>
+        <result column="price" property="price"/>
+        <result column="buy" property="buyAtPurchase"/>
+        <result column="spot" property="spotAtPurchase"/>
+        <result column="volume" property="volume"/>
+        <result column="status" property="status"/>
+        <result column="ticker" property="ticker"/>
+        <result column="opid" property="optionId"/>
+        <result column="opname" property="optionName"/>
+        <result column="optype" property="optionType"/>
+        <collection property="critters"
+                    column="oid"
+                    ofType="nordnetservice.critter.critterrule.Critter"
+                    javaType="java.util.ArrayList">
+            <id column="c_oid" property="oid"/>
+            <result column="c_sell_vol" property="sellVolume" />
+            <result column="c_purchase_id" property="purchaseId" />
+            <result column="c_status" property="status" />
+            <collection column="c_oid"
+                        property="acceptRules"
+                        ofType="nordnetservice.critter.critterrule.AcceptRule"
+                        javaType="java.util.ArrayList">
+                <id column="a_oid" property="oid"/>
+                <result column="a_value" property="accValue" />
+                <result column="a_rtyp" property="rtyp" />
+                <result column="a_active" property="active" />
+                <result column="a_rtyp_desc" property="rtypDesc" />
+                <collection column="a_oid"
+                            property="denyRules"
+                            ofType="nordnetservice.critter.critterrule.DenyRule"
+                            javaType="java.util.ArrayList">
+                    <id column="d_oid" property="oid"/>
+                    <result column="d_value" property="denyValue" />
+                    <result column="d_rtyp" property="rtyp" />
+                    <result column="d_rtyp_desc" property="rtypDesc" />
+                    <result column="d_active" property="active" />
+                    <result column="d_has_memory" property="memory" />
+                </collection>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="activePurchasesWithCritters" resultMap="purchaseResultMap">
+        select o.*,s.ticker,d.opname,d.optype,
+        cr.oid as c_oid,cr.status as c_status,cr.sell_vol as c_sell_vol,cr.purchase_id as c_purchase_id,
+        acc.oid as a_oid,acc.value as a_value,acc.rtyp as a_rtyp,acc.value as a_value,ar.description as a_rtyp_desc,acc.active as a_active,
+        dny.oid as d_oid,dny.value as d_value,dny.rtyp as d_rtyp,dny.active as d_active,dny.has_memory as d_has_memory,dr.description as d_rtyp_desc
+        from stockmarket.optionpurchase o
+        join stockmarket.optionx d on d.oid=o.opid
+        join stockmarket.stocktickers s on s.oid=d.stock_id
+        left outer join stockmarket.critter cr on cr.purchase_id=o.oid and cr.status=7
+        left outer join stockmarket.accept_rules acc on acc.cid=cr.oid
+        left outer join stockmarket.rule_types ar on ar.oid=acc.rtyp
+        left outer join stockmarket.deny_rules dny on dny.group_id=acc.oid
+        left outer join stockmarket.rule_types dr on dr.oid=dny.rtyp
+        where o.status=1 and o.purchase_type=#{purchaseType}
+        order by s.oid,o.dx
+    </select>
+
+    <resultMap id="purchaseWithSalesMap" type="nordnetservice.critter.stockoption.StockOptionPurchase">
+        <id column="oid" property="oid"/>
+        <result column="dx" property="dx"/>
+        <result column="price" property="price"/>
+        <result column="buy" property="buyAtPurchase"/>
+        <result column="spot" property="spotAtPurchase"/>
+        <result column="volume" property="volume"/>
+        <result column="status" property="status"/>
+        <result column="ticker" property="ticker"/>
+        <result column="opid" property="optionId"/>
+        <result column="opname" property="optionName"/>
+        <result column="optype" property="optionType"/>
+        <result column="exp_date" property="expirySql"/>
+        <result column="strike" property="x"/>
+        <!--
+	    <association property="myDerivative" column="oid" javaType="critter.beans.options.DerivativeBean">
+	    	<id property="oid" column="d_oid"/>
+			<result property="expirySql" column="exp_date"/>
+			<result property="x" column="strike"/>
+	    </association>
+	    -->
+        <collection property="sales" 
+                    column="oid" 
+                    javaType="ArrayList" 
+                    ofType="nordnetservice.critter.stockoption.StockOptionSale">
+	    	<id property="oid" column="s_oid"/>
+	    	<result property="dx" column="s_dx"/>
+	    	<result property="price" column="s_price"/>
+	    	<result property="volume" column="s_volume"/>
+        </collection>
+    </resultMap>
+    <select id="purchasesWithSales" resultMap="purchaseWithSalesMap">
+        select o.*,s.ticker,d.oid as d_oid,d.opname,d.exp_date,d.optype,d.strike,
+        x.oid as s_oid,x.dx as s_dx,x.price as s_price,x.volume as s_volume 
+        from stockmarket.optionpurchase o
+        join stockmarket.optionx d on d.oid=o.opid
+        join stockmarket.stocktickers s on s.oid=d.stock_id
+        left outer join stockmarket.optionsale x on x.purchase_id=o.oid
+        where d.stock_id=#{stockId} and o.status=#{status} and o.purchase_type=#{purchaseType}
+        <if test="optype != null">
+            and d.optype=#{optype}
+        </if>
+        order by s.oid,o.dx
+    </select>
+    <select id="purchasesWithSalesAll" resultMap="purchaseWithSalesMap">
+        select o.*,s.ticker,d.oid as d_oid,d.opname,d.exp_date,d.optype,d.strike,
+        x.oid as s_oid,x.dx as s_dx,x.price as s_price,x.volume as s_volume 
+        from stockmarket.optionpurchase o
+        join stockmarket.optionx d on d.oid=o.opid
+        join stockmarket.stocktickers s on s.oid=d.stock_id
+        left outer join stockmarket.optionsale x on x.purchase_id=o.oid
+        where o.status=#{status} and o.purchase_type=#{purchaseType}
+        <if test="optype != null">
+            and d.optype=#{optype}
+        </if>
+        order by s.oid,o.dx
+    </select>
+
+    <select id="findPurchase" resultMap="purchaseResultMap">
+        select o.*,s.ticker,d.opname,d.optype from stockmarket.optionpurchase o
+        join stockmarket.optionx d on d.oid=o.opid
+        join stockmarket.stocktickers s on s.oid=d.stock_id
+        where o.oid=#{purchaseId}
+    </select>
+
+    <select id="findPurchaseForCritId" resultMap="purchaseResultMap">
+        select o.*,s.ticker,d.opname,d.optype from stockmarket.optionpurchase o
+        join stockmarket.optionx d on d.oid=o.opid
+        join stockmarket.stocktickers s on s.oid=d.stock_id
+        join stockmarket.critter c on c.purchase_id=o.oid
+        where c.oid=#{critterId}
+    </select>
+
+    <select id="findPurchaseForAccId" resultMap="purchaseResultMap">
+        select o.*,s.ticker,d.opname,d.optype from stockmarket.optionpurchase o
+        join stockmarket.optionx d on d.oid=o.opid
+        join stockmarket.stocktickers s on s.oid=d.stock_id
+        join stockmarket.critter c on c.purchase_id=o.oid
+        join stockmarket.accept_rules a on a.cid=c.oid
+        where a.oid=#{accId}
+    </select>
+    <!--
+    <select id="selectPurchaseTypeAll" resultMap="purchaseResultMap">
+        select o.*,s.ticker,d.opname from stockmarket.optionpurchase o join stockmarket.optionx d on d.oid=o.opid
+        join stockmarket.stocktickers s on s.oid=d.stock_id
+        where o.purchase_type=#{purchasetype} order by o.dx
+    </select>
+
+    <select id="selectPurchaseType" resultMap="purchaseResultMap">
+        select o.*,s.ticker,d.opname from stockmarket.optionpurchase o join stockmarket.optionx d on d.oid=o.opid
+        join stockmarket.stocktickers s on s.oid=d.stock_id where o.purchase_type=11
+        and exists (select 1 from stockmarket.critter c where c.purchase_id=o.oid and c.status=7 and c.sale_id is null)
+        order by o.dx
+    </select>
+    -->
+
+    <update id="toggleAcceptRule">
+        update stockmarket.accept_rules set active=#{isActive} where oid=#{oid}
+    </update>
+    <update id="toggleDenyRule">
+        update stockmarket.deny_rules set active=#{isActive} where oid=#{oid}
+    </update>
+
+    <!--  oid | opid | dx | price | volume | status | transaction_cost | purchase_type | spotAtPurchase | buy -->
+    <insert id="insertPurchase"
+            parameterType="nordnetservice.critter.stockoption.StockOptionPurchase"
+            useGeneratedKeys="true"
+            keyProperty="oid" >
+        insert into stockmarket.optionpurchase (opid, dx, price, volume, status, purchase_type, spot, buy)
+        values (#{optionId}, #{dx}, #{price}, #{volume}, #{status}, #{purchaseType}, #{spotAtPurchase}, #{buyAtPurchase})
+    </insert>
+
+    <!-- oid | status | critter_type | sell_vol | purchase_id | sale_id -->
+    <insert id="insertCritter"
+            parameterType="nordnetservice.critter.critterrule.Critter"
+            useGeneratedKeys="true"
+            keyProperty="oid" >
+        insert into stockmarket.critter (status,critter_type,sell_vol,purchase_id)
+        values (#{status},#{critterType},#{sellVolume},#{purchaseId})
+    </insert>
+
+    <!-- oid | rtyp | value_1 | value_2 | level_1 | level_2 | active | name | cid -->
+    <insert id="insertGradientRule"
+            parameterType="nordnetservice.critter.critterrule.GradientRule"
+            useGeneratedKeys="true"
+            keyProperty="oid" >
+        insert into stockmarket.gradient_rules (rtyp,value_1,value_2,level_1,level_2,cid)
+        values (#{rtyp},#{value1},#{value2},#{level1},#{level2},#{cid})
+    </insert>
+
+    <!-- oid | value | rtyp | active | locationName | cid -->
+    <insert id="insertAcceptRule"
+            parameterType="nordnetservice.critter.critterrule.AcceptRule"
+            useGeneratedKeys="true"
+            keyProperty="oid" >
+        insert into stockmarket.accept_rules (value,rtyp,active,cid)
+        values (#{accValue},#{rtyp},#{active},#{cid})
+    </insert>
+
+
+    <!-- oid | value | rtyp | group_id | active | has_memory -->
+    <insert id="insertDenyRule"
+            parameterType="nordnetservice.critter.critterrule.DenyRule"
+            useGeneratedKeys="true"
+            keyProperty="oid" >
+        insert into stockmarket.deny_rules (value,rtyp,group_id,active,has_memory)
+        values (#{denyValue},#{rtyp},#{groupId},#{active},#{memory})
+    </insert>
+
+    <update id="registerCritterClosedWithSale"
+            parameterType="nordnetservice.critter.critterrule.Critter"
+            flushCache="true"
+            statementType="PREPARED">
+        update stockmarket.critter set status=9, sale_id=#{saleId} where oid=#{oid}
+    </update>
+    <update id="registerPurchaseFullySold"
+            parameterType="nordnetservice.critter.stockoption.StockOptionPurchase"
+            flushCache="true"
+            statementType="PREPARED">
+        update stockmarket.optionpurchase set status=2 where oid=#{oid}
+    </update>
+
+    <insert id="insertCritterSale"
+            parameterType="nordnetservice.critter.stockoption.StockOptionSale"
+            useGeneratedKeys="true"
+            keyProperty="oid" >
+        insert into stockmarket.optionsale (purchase_id,dx,price,volume)
+        values (#{purchaseOid},#{dx},#{price},#{volume})
+    </insert>
+</mapper>
