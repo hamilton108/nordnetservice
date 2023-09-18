@@ -16,8 +16,15 @@ public class RedisAdapterTest {
     private RedisAdapter redisAdapter;
 
     @Test
-    public void test_opening_price() {
+    void test_opening_price() {
         var result = redisAdapter.openingPrice(new StockTicker("YAR"));
         assertEquals(452.0, result, 0.01);
+    }
+
+    @Test
+    void test_redis_url() {
+        var result = redisAdapter.fetchValue("test-url");
+        var expected = "file:////home/rcs/opt/java/nordnetservice/test/resources/html/yar.html";
+        assertEquals(expected, result);
     }
 }

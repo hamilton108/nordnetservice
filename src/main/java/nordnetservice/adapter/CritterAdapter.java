@@ -1,5 +1,6 @@
 package nordnetservice.adapter;
 
+import nordnetservice.critter.mybatis.CritterMapper;
 import nordnetservice.critter.stockoption.StockOptionPurchase;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Component;
@@ -17,12 +18,12 @@ public class CritterAdapter {
     }
 
     public List<StockOptionPurchase> fetchCritters(int purchaseType) {
-        return new ArrayList<>();
-    /*
+        //return new ArrayList<>();
+        //*
         var mapper = session.getMapper(CritterMapper.class);
         var result = mapper.activePurchasesWithCritters(purchaseType);
         return result;
-     */
+     //*/
     }
 
 

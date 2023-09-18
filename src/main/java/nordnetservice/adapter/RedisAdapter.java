@@ -18,5 +18,9 @@ public class RedisAdapter {
         var result = (String)redisTemplate.opsForHash().get("openingprices", ticker.getValue());
         return Double.parseDouble(result);
     }
+
+    public String fetchValue(String key) {
+        return (String)redisTemplate.opsForValue().get(key);
+    }
 }
 
