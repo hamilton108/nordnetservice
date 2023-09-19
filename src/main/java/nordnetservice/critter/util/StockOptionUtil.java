@@ -1,8 +1,8 @@
 package nordnetservice.critter.util;
 
 
-import oahu.dto.Tuple3;
-import oahu.exceptions.FinancialException;
+import nordnetservice.domain.dto.Tuple3;
+import nordnetservice.domain.exception.FinancialException;
 import vega.financial.StockOptionType;
 
 import java.time.DayOfWeek;

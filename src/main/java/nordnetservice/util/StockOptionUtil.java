@@ -1,14 +1,18 @@
 package nordnetservice.util;
 
+import nordnetservice.domain.dto.Tuple2;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOptionInfo;
-import oahu.dto.Tuple2;
-import oahu.financial.StockOptionTicker;
+import nordnetservice.domain.stockoption.StockOptionTicker;
 import vega.financial.StockOptionType;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.chrono.ChronoLocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjuster;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -106,40 +110,55 @@ public class StockOptionUtil {
         var epoch = zone.toEpochSecond();
         return epoch*1000;
     }
+    public static long nordnetMillis(int year, int month) {
+        var dx = thirdFriday(year, month);
+        return nordnetMillis(dx);
+    }
+
+    public static LocalDate thirdFriday(int year, int month) {
+        return LocalDate.of(year, month, 1).
+                with(TemporalAdjusters.dayOfWeekInMonth(3, DayOfWeek.FRIDAY));
+    }
 
     public static StockOptionInfo stockOptionInfoFromTicker(StockOptionTicker ticker) {
-        var m = pat.matcher(ticker.getValue());
+        var m = pat.matcher(ticker.value());
         if (m.find()) {
-            var oinfo = str2optInfo.get(m.group(3));
-            if (oinfo == null) {
+            var info = str2optInfo.get(m.group(3));
+            if (info == null) {
                 return StockOptionInfo.err();
             }
             var stik = m.group(1);
             var year = str2year.get(m.group(2));
-            var month = oinfo.second();
+            var month = info.second();
             var stockTicker = new StockTicker(stik);
-            var ot = oinfo.first();
+            var ot = info.first();
             return new StockOptionInfo(OK, stockTicker, ticker, year, month, ot);
         }
         return StockOptionInfo.err();
     }
-    /*
-    month (:m oinfo)
-    oid (ticker->oid stik)]
-    {:ticker stik
-         :option ticker
-         :oid oid
-         :year year
-         :month  month
-         :ot (:ot oinfo)})
-    {})))
 
-     */
+
 
     public static String mapOid(int value) {
         return oid2str.get(value);
     }
     public static int mapString(String value) {
         return str2oid.get(value);
+    }
+
+    public static String iso8601(LocalDate ld) {
+        var month = ld.getMonthValue() < 10 ?
+                String.format("0%d", ld.getMonthValue()) :
+                String.format("%d", ld.getMonthValue());
+        var day = ld.getDayOfMonth() < 10 ?
+                String.format("0%d", ld.getDayOfMonth()) :
+                String.format("%d", ld.getDayOfMonth());
+        return String.format("%d-%s-%s", ld.getYear(), month, day);
+    }
+    public static Tuple2<String,Long> iso8601andDays(StockOptionTicker ticker, LocalDate curDate) {
+        var info = stockOptionInfoFromTicker(ticker);
+        var friday = thirdFriday(info.getYear(), info.getMonth());
+        var days = ChronoUnit.DAYS.between(curDate, friday);
+        return new Tuple2<>(iso8601(friday), days);
     }
 }

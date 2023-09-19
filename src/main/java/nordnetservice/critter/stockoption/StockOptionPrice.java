@@ -1,7 +1,7 @@
 package nordnetservice.critter.stockoption;
 
 import nordnetservice.critter.stock.StockPrice;
-import oahu.exceptions.BinarySearchException;
+import vega.exception.BinarySearchException;
 import vega.financial.calculator.OptionCalculator;
 import vega.financial.StockOptionType;
 
@@ -40,16 +40,16 @@ public class StockOptionPrice implements vega.financial.StockOptionPrice {
         this.sell = sell;
         this.calculator = calculator;
     }
-    public double getBuy() {
+    public double getBid() {
         return buy;
     }
 
-    public double getSell() {
+    public double getAsk() {
         return sell;
     }
 
     @Override
-    public Optional<Double> ivBuy() {
+    public Optional<Double> ivBid() {
         return getIvBuy();
     }
 
@@ -58,7 +58,7 @@ public class StockOptionPrice implements vega.financial.StockOptionPrice {
     public Optional<Double> getBreakEven() {
         try {
             if (_breakEven == null) {
-                _breakEven = Optional.of(calculator.stockPriceFor(getSell(), this));
+                _breakEven = Optional.of(calculator.stockPriceFor(getAsk(), this));
             }
         }
         catch (BinarySearchException ex) {

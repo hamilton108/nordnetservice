@@ -18,12 +18,9 @@ public class CritterAdapter {
     }
 
     public List<StockOptionPurchase> fetchCritters(int purchaseType) {
-        //return new ArrayList<>();
-        //*
         var mapper = session.getMapper(CritterMapper.class);
         var result = mapper.activePurchasesWithCritters(purchaseType);
         return result;
-     //*/
     }
 
 

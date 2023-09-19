@@ -28,7 +28,6 @@ public class RedisConfig {
         redisConfig.setHostName(redisHostName);
         redisConfig.setPort(redisPort);
         redisConfig.setDatabase(redisDb);
-        var x = new JedisConnectionFactory(redisConfig);
         return new JedisConnectionFactory(redisConfig);
     }
 

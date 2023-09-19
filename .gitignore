@@ -28,4 +28,6 @@ replay_pid*
 build/
 gradle/
 gradlew.bat
+python/venv/
+src/main/resources/html/
 

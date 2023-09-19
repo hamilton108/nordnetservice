@@ -1,15 +1,18 @@
 package nordnetservice.adapter;
 
-import oahu.financial.StockTicker;
+import nordnetservice.domain.stock.StockTicker;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+// @ActiveProfiles("test")
+
 @SpringBootTest
-@ActiveProfiles("test")
 public class RedisAdapterTest {
 
     @Autowired
@@ -22,9 +25,17 @@ public class RedisAdapterTest {
     }
 
     @Test
+    void test_nordnet_millis() {
+        var actual = redisAdapter.nordnetMillisForUrl(LocalDate.of(2023,3,1));
+        assertEquals(3, actual.size());
+    }
+
+    /*
+    @Test
     void test_redis_url() {
         var result = redisAdapter.fetchValue("test-url");
         var expected = "file:////home/rcs/opt/java/nordnetservice/test/resources/html/yar.html";
         assertEquals(expected, result);
     }
+     */
 }

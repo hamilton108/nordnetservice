@@ -1,7 +1,7 @@
 package nordnetservice.domain.stockoption;
 
 import nordnetservice.domain.stock.StockTicker;
-import oahu.financial.StockOptionTicker;
+import nordnetservice.util.StockOptionUtil;
 import vega.financial.StockOptionType;
 
 public class StockOptionInfo {
@@ -30,6 +30,10 @@ public class StockOptionInfo {
         return stockOptionType;
     }
 
+    public long getNordnetMillis() {
+        return nordnetMillis;
+    }
+
     public enum StatusEnum { ERR, OK };
 
     private final StatusEnum status;
@@ -37,6 +41,7 @@ public class StockOptionInfo {
     private final StockOptionTicker stockOptionTicker;
     private final int year;
     private final int month;
+    private final long nordnetMillis;
     private final StockOptionType stockOptionType;
 
     public StockOptionInfo(StatusEnum status) {
@@ -54,6 +59,7 @@ public class StockOptionInfo {
         this.stockOptionTicker = stockOptionTicker;
         this.year = year;
         this.month = month;
+        this.nordnetMillis = year != 0 ? StockOptionUtil.nordnetMillis(year, month) : 0;
         this.stockOptionType = stockOptionType;
     }
     public static StockOptionInfo err() {
