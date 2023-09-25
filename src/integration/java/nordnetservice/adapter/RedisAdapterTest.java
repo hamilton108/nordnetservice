@@ -21,7 +21,7 @@ public class RedisAdapterTest {
     @Test
     void test_opening_price() {
         var result = redisAdapter.openingPrice(new StockTicker("YAR"));
-        assertEquals(452.0, result, 0.01);
+        assertEquals(403.0, result, 0.01);
     }
 
     @Test

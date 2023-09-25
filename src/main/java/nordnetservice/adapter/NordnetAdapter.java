@@ -1,5 +1,7 @@
 package nordnetservice.adapter;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.dto.Tuple2;
 import nordnetservice.domain.stock.StockPrice;
@@ -19,9 +21,11 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
 
 @Component
 public class NordnetAdapter {
@@ -34,12 +38,13 @@ public class NordnetAdapter {
     private final int X = 7;
     private final int PUT_BID = 9;
     private final int PUT_ASK = 10;
-    private final int PUT_TICKER = 11;
+    private final int PUT_TICKER = 13;
     private final Pattern pat = Pattern.compile("Norway\\s*(\\S*)");
     private final Downloader<PageInfo> downloader;
     private final RedisAdapter redisAdapter;
     private final LocalDate curDate;
     private final OptionCalculator calculator;
+    private final Cache<Integer, Tuple2<StockPrice,List<StockOption>>> cache;
 
     public NordnetAdapter(Downloader<PageInfo> downloaderAdapter,
                           RedisAdapter redisAdapter,
@@ -54,8 +59,8 @@ public class NordnetAdapter {
         else {
             curDate = LocalDate.parse(curDateStr);
         }
+        cache = Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
     }
-
 
     private String elementText(Element el) {
         var result = el.children().get(0).text();
@@ -128,16 +133,24 @@ public class NordnetAdapter {
     }
 
     private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker) {
-        var pages = downloader.download(ticker);
-        if (pages.size() == 0) {
-            return new Tuple2<>(null, Collections.emptyList());
+        var hit = cache.getIfPresent(ticker.oid());
+        if ( hit == null) {
+            var pages = downloader.download(ticker);
+            if (pages.size() == 0) {
+                return new Tuple2<>(null, Collections.emptyList());
+            }
+            var page = pages.get(0);
+            var soup = Jsoup.parse(page.body());
+            var roleTable = soup.select("[role=table]");
+            var sp = parseStockPrice(ticker, roleTable.get(0));
+            var options = parseOptions(sp, roleTable.get(1));
+            var newCached = new Tuple2<>(sp, options);
+            cache.put(ticker.oid(), newCached);
+            return newCached;
         }
-        var page = pages.get(0);
-        var soup = Jsoup.parse(page.body());
-        var roleTable = soup.select("[role=table]");
-        var sp = parseStockPrice(ticker, roleTable.get(0));
-        var options = parseOptions(sp, roleTable.get(1));
-        return new Tuple2<>(sp, options);
+        else {
+            return hit;
+        }
     }
 
     private List<StockOption> getOptions(StockTicker ticker, StockOptionType ot) {
@@ -147,6 +160,15 @@ public class NordnetAdapter {
 
     public List<StockOption> getCalls(StockTicker ticker) {
         return getOptions(ticker, StockOptionType.CALL);
+    }
+
+    public List<StockOption> getPuts(StockTicker ticker) {
+        return getOptions(ticker, StockOptionType.PUT);
+    }
+
+    public StockPrice getStockPrice(StockTicker ticker) {
+        var result = parse(ticker);
+        return result.first();
     }
 
     private record StockOptionCreator(StockOptionType ot,

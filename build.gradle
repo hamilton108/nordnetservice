@@ -25,6 +25,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.1'
 	implementation 'net.sourceforge.htmlunit:htmlunit:2.70.0'
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 	runtimeOnly 'org.postgresql:postgresql'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

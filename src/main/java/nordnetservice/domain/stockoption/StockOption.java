@@ -81,6 +81,13 @@ public class StockOption {
         }
         return ask;
     }
+    private Double breakEven;
+    public double getBreakEven() {
+        if (breakEven == null) {
+            breakEven = 12.0; //calculator.breakEven();
+        }
+        return breakEven;
+    }
     private double calculateIv(double price) {
         try {
             return ot == StockOptionType.CALL ?
