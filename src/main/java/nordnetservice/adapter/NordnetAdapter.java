@@ -145,8 +145,10 @@ public class NordnetAdapter {
         return new Tuple2<>(sp, options);
     }
 
-    private List<StockOption> parsePage(PageInfo page) {
-        return new ArrayList<>();
+    private List<StockOption> parsePage(StockPrice stockPrice, PageInfo page) {
+        var soup = Jsoup.parse(page.body());
+        var roleTable = soup.select("[role=table]");
+        return parseOptions(stockPrice, roleTable.get(1));
     }
 
     private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker) {
@@ -164,7 +166,9 @@ public class NordnetAdapter {
 
             if (pages.size() > 1) {
 
-                var restList = pages.stream().skip(1).map(this::parsePage).toList();
+                var parsePageClosure = new ParsePageClosure(result0.first(), this);
+
+                var restList = pages.stream().skip(1).map(parsePageClosure).toList();
 
                 var result = ListUtil.joinLists(result0.second(), restList);
 
@@ -255,6 +259,14 @@ public class NordnetAdapter {
         return Optional.of(hit);
 
          */
+    }
+
+    private record ParsePageClosure(StockPrice stockPrice,
+                                    NordnetAdapter adapter) implements Function<PageInfo, List<StockOption>> {
+        @Override
+        public List<StockOption> apply(PageInfo page) {
+            return adapter.parsePage(stockPrice, page);
+        }
     }
 
     private record StockOptionCreator(StockOptionType ot,

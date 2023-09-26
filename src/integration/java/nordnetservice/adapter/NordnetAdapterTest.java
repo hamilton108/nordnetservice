@@ -29,16 +29,18 @@ class NordnetAdapterTest {
         var stockPrice = nordnetAdapter.getStockPrice(stockTicker);
         checkStockPrice(stockPrice);
         var calls = nordnetAdapter.getCalls(stockTicker);
-        assertEquals(27, calls.size());
+        assertEquals(42, calls.size());
         var puts = nordnetAdapter.getPuts(stockTicker);
-        assertEquals(27, puts.size());
+        assertEquals(42, puts.size());
         checkStockOption("YAR4C540", 0.55, 1.6, 540, calls);
         checkStockOption("YAR4C500", 2.2, 4.6, 500, calls);
         checkStockOption("YAR4C340", 77.75, 83.25, 340, calls);
+        checkStockOption("YAR4I360", 0.0, 0.0, 360, calls);
 
         checkStockOption("YAR4O780", 367.25, 373.25, 780, puts);
         checkStockOption("YAR4O520", 107.5, 113.5, 520, puts);
         checkStockOption("YAR4O320", 1.25, 2.05, 320, puts);
+        checkStockOption("YAR4U440", 0.0, 0.0, 440, puts);
     }
 
     @Test

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @ComponentScan({
 		  "nordnetservice.adapter"
+		, "nordnetservice.api"
 		, "nordnetservice.config"
 		, "nordnetservice.domain.core"
 		, "vega.financial.calculator"

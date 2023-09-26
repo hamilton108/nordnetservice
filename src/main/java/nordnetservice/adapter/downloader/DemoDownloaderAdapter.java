@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,7 +40,16 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
             var page = client.getPage(testUrl);
             var content = page.getWebResponse().getContentAsString();
             var info = new PageInfo(content);
-            return Collections.singletonList(info);
+
+            if (testUrl2 == null) {
+                return Collections.singletonList(info);
+            }
+            else {
+                var page2 = client.getPage(testUrl2);
+                var content2 = page2.getWebResponse().getContentAsString();
+                var info2 = new PageInfo(content2);
+                return Arrays.asList(info, info2);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
