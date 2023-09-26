@@ -5,22 +5,12 @@ import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.html.PageInfo;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOptionTicker;
+import nordnetservice.util.NordnetUtil;
+import nordnetservice.util.StockOptionUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-/*
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.file.Path;
-import java.util.Collections;
-
- */
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -30,10 +20,14 @@ import java.util.List;
 public class DemoDownloaderAdapter implements Downloader<PageInfo> {
     private final WebClient client;
     private final String testUrl;
+    private final String testUrl2;
 
-    public DemoDownloaderAdapter(@Value("${url.test}") String testUrl) {
+    public DemoDownloaderAdapter(@Value("${url.test}") String testUrl,
+                                 @Value("${url.test.2}") String testUrl2) {
         System.out.println(testUrl);
+        System.out.println(testUrl2);
         this.testUrl = testUrl;
+        this.testUrl2 = testUrl2;
 
         this.client = new WebClient();
         this.client.getOptions().setJavaScriptEnabled(false);
@@ -45,7 +39,6 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
             var page = client.getPage(testUrl);
             var content = page.getWebResponse().getContentAsString();
             var info = new PageInfo(content);
-
             return Collections.singletonList(info);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -61,14 +54,20 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
         } catch (IOException | InterruptedException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
-
          */
     }
 
     @Override
     public PageInfo download(StockOptionTicker ticker) {
-        return null;
-    }
+        try {
+            //var url = NordnetUtil.urlFor(ticker);
 
+            var page = client.getPage(testUrl);
+            var content = page.getWebResponse().getContentAsString();
+            return new PageInfo(content);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

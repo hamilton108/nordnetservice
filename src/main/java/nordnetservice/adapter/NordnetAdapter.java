@@ -7,7 +7,9 @@ import nordnetservice.domain.dto.Tuple2;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;
+import nordnetservice.domain.stockoption.StockOptionInfo;
 import nordnetservice.domain.stockoption.StockOptionTicker;
+import nordnetservice.util.ListUtil;
 import nordnetservice.util.StockOptionUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -18,9 +20,7 @@ import vega.financial.StockOptionType;
 import vega.financial.calculator.OptionCalculator;
 
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -44,7 +44,8 @@ public class NordnetAdapter {
     private final RedisAdapter redisAdapter;
     private final LocalDate curDate;
     private final OptionCalculator calculator;
-    private final Cache<Integer, Tuple2<StockPrice,List<StockOption>>> cache;
+    private final Cache<Integer, Tuple2<StockPrice,List<StockOption>>> cacheStockOptions;
+    private final Cache<String, Tuple2<StockPrice,List<StockOption>>> cacheStockOption;
 
     public NordnetAdapter(Downloader<PageInfo> downloaderAdapter,
                           RedisAdapter redisAdapter,
@@ -59,13 +60,12 @@ public class NordnetAdapter {
         else {
             curDate = LocalDate.parse(curDateStr);
         }
-        cache = Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+        cacheStockOptions = Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+        cacheStockOption = Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
     }
 
     private String elementText(Element el) {
-        var result = el.children().get(0).text();
-        //System.out.println(result);
-        return result;
+        return el.children().get(0).text();
     }
     private StockOptionTicker el2ticker(Element el) {
         var m = pat.matcher(elementText(el));
@@ -132,21 +132,53 @@ public class NordnetAdapter {
         return new StockPrice(opn, hi, lo, cls);
     }
 
+    private List<StockOption> parse(StockPrice stockPrice, PageInfo page) {
+        var soup = Jsoup.parse(page.body());
+        var roleTable = soup.select("[role=table]");
+        return parseOptions(stockPrice, roleTable.get(1));
+    }
+    private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker, PageInfo page) {
+        var soup = Jsoup.parse(page.body());
+        var roleTable = soup.select("[role=table]");
+        var sp = parseStockPrice(ticker, roleTable.get(0));
+        var options = parseOptions(sp, roleTable.get(1));
+        return new Tuple2<>(sp, options);
+    }
+
+    private List<StockOption> parsePage(PageInfo page) {
+        return new ArrayList<>();
+    }
+
     private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker) {
-        var hit = cache.getIfPresent(ticker.oid());
-        if ( hit == null) {
+
+        var hit = cacheStockOptions.getIfPresent(ticker.oid());
+
+        if (hit == null) {
             var pages = downloader.download(ticker);
             if (pages.size() == 0) {
                 return new Tuple2<>(null, Collections.emptyList());
             }
             var page = pages.get(0);
-            var soup = Jsoup.parse(page.body());
-            var roleTable = soup.select("[role=table]");
-            var sp = parseStockPrice(ticker, roleTable.get(0));
-            var options = parseOptions(sp, roleTable.get(1));
-            var newCached = new Tuple2<>(sp, options);
-            cache.put(ticker.oid(), newCached);
-            return newCached;
+
+            var result0 = parse(ticker, page);
+
+            if (pages.size() > 1) {
+
+                var restList = pages.stream().skip(1).map(this::parsePage).toList();
+
+                var result = ListUtil.joinLists(result0.second(), restList);
+
+                var newCached = new Tuple2<>(result0.first(), result);
+
+                cacheStockOptions.put(ticker.oid(), newCached);
+
+                return newCached;
+            }
+            else {
+                cacheStockOptions.put(ticker.oid(), result0);
+
+                return result0;
+            }
         }
         else {
             return hit;
@@ -169,6 +201,60 @@ public class NordnetAdapter {
     public StockPrice getStockPrice(StockTicker ticker) {
         var result = parse(ticker);
         return result.first();
+    }
+
+    private String keyFor(StockOptionInfo info) {
+        return String.format("%d:%d", info.getStockTicker().oid(), info.getNordnetMillis());
+    }
+
+    public Tuple2<StockPrice,StockOption> findOption(StockOptionTicker ticker) {
+
+        var info = StockOptionUtil.stockOptionInfoFromTicker(ticker);
+
+        var key = keyFor(info);
+
+        var hit = cacheStockOption.getIfPresent(key);
+
+        if (hit == null) {
+
+            var page = downloader.download(ticker);
+
+            Tuple2<StockPrice, List<StockOption>> options = parse(info.getStockTicker(), page);
+
+            cacheStockOption.put(key, options);
+
+            hit = options;
+        }
+
+        var tickerS = ticker.value();
+
+        var opt = hit.second().stream().filter(s -> s.getTicker().value().equals(tickerS)).findFirst();
+
+        if (opt.isPresent()) {
+            return new Tuple2<>(hit.first(), opt.get());
+        }
+        else {
+            return null;
+        }
+
+        /*
+            var tickerS = ticker.value();
+
+            var opt = options.second().stream().filter(s -> s.getTicker().value().equals(tickerS)).findFirst();
+
+            if (opt.isPresent()) {
+                var newCached = new Tuple2<StockPrice,StockOption>(options.first(), opt.get());
+                cacheStockOption.put(info.getStockTicker().oid(), newCached);
+                return newCached;
+            }
+            else {
+                return Optional.empty();
+            }
+
+        }
+        return Optional.of(hit);
+
+         */
     }
 
     private record StockOptionCreator(StockOptionType ot,
