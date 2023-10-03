@@ -1,4 +1,4 @@
-package nordnetservice.domain.dto;
+package nordnetservice.dto;
 
 public class Tuple2<T1,T2> {
     private final T1 _first;

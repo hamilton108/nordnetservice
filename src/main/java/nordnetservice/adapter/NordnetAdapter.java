@@ -3,7 +3,7 @@ package nordnetservice.adapter;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import nordnetservice.domain.downloader.Downloader;
-import nordnetservice.domain.dto.Tuple2;
+import nordnetservice.dto.Tuple2;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;
@@ -29,16 +29,16 @@ import java.util.stream.Stream;
 
 @Component
 public class NordnetAdapter {
-    private final int SP_CLS = 4;
-    private final int SP_HI = 7;
-    private final int SP_LO = 8;
-    private final int CALL_TICKER = 1;
-    private final int CALL_BID = 3;
-    private final int CALL_ASK = 4;
-    private final int X = 7;
-    private final int PUT_BID = 9;
-    private final int PUT_ASK = 10;
-    private final int PUT_TICKER = 13;
+    private static final int SP_CLS = 4;
+    private static final int SP_HI = 7;
+    private static final int SP_LO = 8;
+    private static final int CALL_TICKER = 1;
+    private static final int CALL_BID = 3;
+    private static final int CALL_ASK = 4;
+    private static final int X = 7;
+    private static final int PUT_BID = 9;
+    private static final int PUT_ASK = 10;
+    private static final int PUT_TICKER = 13;
     private final Pattern pat = Pattern.compile("Norway\\s*(\\S*)");
     private final Downloader<PageInfo> downloader;
     private final RedisAdapter redisAdapter;
@@ -50,7 +50,9 @@ public class NordnetAdapter {
     public NordnetAdapter(Downloader<PageInfo> downloaderAdapter,
                           RedisAdapter redisAdapter,
                           OptionCalculator calculator,
-                          @Value("${curdate}") String curDateStr) {
+                          @Value("${curdate}") String curDateStr,
+                          @Value("${cache.options.expiry}") int optionsExpiry,
+                          @Value("${cache.option.expiry}") int optionExpiry) {
         this.downloader = downloaderAdapter;
         this.redisAdapter = redisAdapter;
         this.calculator = calculator;
@@ -60,8 +62,8 @@ public class NordnetAdapter {
         else {
             curDate = LocalDate.parse(curDateStr);
         }
-        cacheStockOptions = Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
-        cacheStockOption = Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
+        cacheStockOptions = Caffeine.newBuilder().expireAfterWrite(optionsExpiry, TimeUnit.MINUTES).build();
+        cacheStockOption = Caffeine.newBuilder().expireAfterWrite(optionExpiry, TimeUnit.SECONDS).build();
     }
 
     private String elementText(Element el) {
@@ -132,11 +134,14 @@ public class NordnetAdapter {
         return new StockPrice(opn, hi, lo, cls);
     }
 
+    /*
     private List<StockOption> parse(StockPrice stockPrice, PageInfo page) {
         var soup = Jsoup.parse(page.body());
         var roleTable = soup.select("[role=table]");
         return parseOptions(stockPrice, roleTable.get(1));
     }
+     */
+
     private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker, PageInfo page) {
         var soup = Jsoup.parse(page.body());
         var roleTable = soup.select("[role=table]");

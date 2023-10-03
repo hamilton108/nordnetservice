@@ -1,6 +1,6 @@
 package nordnetservice.util;
 
-import nordnetservice.domain.dto.Tuple2;
+import nordnetservice.dto.Tuple2;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOptionInfo;
 import nordnetservice.domain.stockoption.StockOptionTicker;

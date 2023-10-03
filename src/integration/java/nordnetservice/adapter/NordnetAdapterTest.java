@@ -47,19 +47,16 @@ class NordnetAdapterTest {
     void test_find_option() {
 
         var ticker = new StockOptionTicker("YAR4C340");
-
         var option = nordnetAdapter.findOption(ticker);
-
         assertNotNull(option);
-
         checkStockPrice(option.first());
-        checkStockOption(option.second(),77.75, 83.25, 340);
+        checkStockOption(option.second(),77.75, 83.25, 340, 0.1, 0.29, false);
 
 
         var ticker2 = new StockOptionTicker("YAR4O780");
         var option2 = nordnetAdapter.findOption(ticker2);
         assertNotNull(option2);
-        checkStockOption(option2.second(),367.25, 373.25, 780);
+        checkStockOption(option2.second(),367.25, 373.25, 780, 0.75, 0.83, true);
     }
 
     private void checkStockPrice(StockPrice stockPrice) {
@@ -72,10 +69,17 @@ class NordnetAdapterTest {
     private void checkStockOption(StockOption option,
                                   double bid,
                                   double ask,
-                                  double x) {
+                                  double x,
+                                  double ivBid,
+                                  double ivAsk,
+                                  boolean skipIv) {
         assertEquals(bid, option.getBid(), 0.01);
         assertEquals(ask, option.getAsk(), 0.01);
         assertEquals(x, option.getX(), 0.001);
+        if (!skipIv) {
+            assertEquals(ivBid, option.getIvBid(), 0.01);
+            assertEquals(ivAsk, option.getIvAsk(), 0.01);
+        }
     }
 
     private void checkStockOption(String tickerS,

@@ -30,4 +30,6 @@ gradle/
 gradlew.bat
 python/venv/
 src/main/resources/html/
+docker/*.html
+docker/*.jar
 

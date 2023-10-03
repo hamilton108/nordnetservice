@@ -17,14 +17,14 @@ import java.util.Collections;
 import java.util.List;
 
 @Component
-@Profile({"demo","test", "integration"})
+@Profile({"demo","docker","test", "integration"})
 public class DemoDownloaderAdapter implements Downloader<PageInfo> {
     private final WebClient client;
     private final String testUrl;
     private final String testUrl2;
 
     public DemoDownloaderAdapter(@Value("${url.test}") String testUrl,
-                                 @Value("${url.test.2}") String testUrl2) {
+                                 @Value("${url.test.2:#{null}}") String testUrl2) {
         System.out.println(testUrl);
         System.out.println(testUrl2);
         this.testUrl = testUrl;
@@ -34,25 +34,30 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
         this.client.getOptions().setJavaScriptEnabled(false);
     }
 
+    private List<PageInfo> result = null;
     @Override
     public List<PageInfo> download(StockTicker ticker) {
-        try {
-            var page = client.getPage(testUrl);
-            var content = page.getWebResponse().getContentAsString();
-            var info = new PageInfo(content);
+        if (result == null) {
 
-            if (testUrl2 == null) {
-                return Collections.singletonList(info);
+            try {
+                var page = client.getPage(testUrl);
+                var content = page.getWebResponse().getContentAsString();
+                var info = new PageInfo(content);
+
+                if (testUrl2 == null) {
+                    result = Collections.singletonList(info);
+                } else {
+                    var page2 = client.getPage(testUrl2);
+                    var content2 = page2.getWebResponse().getContentAsString();
+                    var info2 = new PageInfo(content2);
+                    result = Arrays.asList(info, info2);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            else {
-                var page2 = client.getPage(testUrl2);
-                var content2 = page2.getWebResponse().getContentAsString();
-                var info2 = new PageInfo(content2);
-                return Arrays.asList(info, info2);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
+
+        return result;
         /*
         try {
             var uri = new URI(testUrl); //Path.of(testUrl).toUri();

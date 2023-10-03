@@ -1,7 +1,7 @@
 package nordnetservice.critter.util;
 
 
-import nordnetservice.domain.dto.Tuple3;
+import nordnetservice.dto.Tuple3;
 import nordnetservice.domain.exception.FinancialException;
 import vega.financial.StockOptionType;
 

@@ -79,7 +79,7 @@ public class StockOption {
         if (ivAsk == null) {
             ivAsk = calculateIv(ask);
         }
-        return ask;
+        return ivAsk;
     }
     private Double breakEven;
     public double getBreakEven() {

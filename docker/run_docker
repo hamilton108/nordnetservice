@@ -1,0 +1,15 @@
+#!/bin/bash
+
+NORDNET="rcs/nordnetservice:0.9.0"
+ROOT="0"
+NETWORK="pgutil_lofsrud"
+
+# docker run -it --rm --network $NETWORK --ip 172.20.1.9 -v $opt:$opt -w $WD $JAVA_VER /bin/sh
+#
+if [ "$ROOT" = "1" ]; then
+  docker run --rm --network $NETWORK $NORDNET
+else
+  docker run --network $NETWORK --user $(id -u):$(id -g) --rm $NORDNET
+fi
+
+exit 0
