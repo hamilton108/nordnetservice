@@ -1,8 +1,8 @@
 package nordnetservice.api.nordnet;
 
-import nordnetservice.api.nordnet.response.FindOptionResponse;
+import nordnetservice.api.nordnet.response.CallsResponse;
 import nordnetservice.domain.core.Core;
-import nordnetservice.domain.stockoption.StockOptionTicker;
+import nordnetservice.domain.stock.StockTicker;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,9 +22,9 @@ public class NordnetController {
     }
 
     @ResponseBody
-    @GetMapping(value = "/option/{ticker}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public FindOptionResponse findOption(@PathVariable("ticker") String ticker) {
-        var result = core.findOption(new StockOptionTicker(ticker));
+    @GetMapping(value = "/calls/{oid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CallsResponse calls(@PathVariable("oid") int oid) {
+        var ticker = new StockTicker(oid);
         return null;
     }
 
