@@ -2,7 +2,10 @@ FROM eclipse-temurin:17-jre-alpine
 
 # ARG VERSION
 
+
 RUN mkdir /app
+
+RUN mkdir /logs
 
 RUN mkdir /app/html
 

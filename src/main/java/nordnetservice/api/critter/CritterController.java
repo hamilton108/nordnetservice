@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/critter")

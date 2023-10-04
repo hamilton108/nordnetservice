@@ -21,6 +21,10 @@ public class OptionPurchaseDTO {
         return purchase.getOptionName();
     }
 
+    public double getPrice() {
+        return purchase.getPrice();
+    }
+
     public List<CritterDTO> getCritters()  {
         List<CritterDTO> result = new ArrayList<>();
         for (Critter critter : purchase.getCritters()) {
