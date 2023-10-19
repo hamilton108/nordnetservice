@@ -1,17 +1,80 @@
 package nordnetservice.adapter.downloader;
 
+import nordnetservice.adapter.RedisAdapter;
 import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.html.PageInfo;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOptionTicker;
+import nordnetservice.util.NordnetUtil;
+import org.apache.http.HttpStatus;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @Component
 @Profile("prod")
-public class DefaultDownloaderAdapter  {
+public class DefaultDownloaderAdapter  implements  Downloader<PageInfo> {
+
+    private HttpClient client;
+
+    private final RedisAdapter redisAdapter;
+
+    public DefaultDownloaderAdapter(RedisAdapter redisAdapter) {
+        this.redisAdapter = redisAdapter;
+    }
+
+    @Override
+    public List<PageInfo> download(StockTicker ticker) {
+        var nordnetMillis = redisAdapter.nordnetMillisForUrl(LocalDate.now());
+
+        var result = new ArrayList<PageInfo>();
+
+        for (var nm : nordnetMillis) {
+            try {
+                var page = download(ticker, nm);
+                result.add(page);
+            }
+            catch (DownloadException e) {
+
+            }
+        }
+
+        return result;
+    }
+
+    PageInfo download(StockTicker ticker, long nordnetMillis) {
+        try {
+            var url = NordnetUtil.urlFor(ticker, nordnetMillis);
+            var req =
+                    HttpRequest.newBuilder(url.toURI()).GET().build();
+            HttpResponse<String> response = getClient().send(req, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != HttpStatus.SC_OK) {
+                throw new DownloadException(response.statusCode());
+            }
+            return new PageInfo(response.body());
+        } catch (IOException | InterruptedException | URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public PageInfo download(StockOptionTicker ticker) {
+        return null;
+    }
+
+    private HttpClient getClient() {
+        if (client == null) {
+            client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
+        }
+        return client;
+    }
 }

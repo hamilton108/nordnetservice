@@ -1,9 +1,9 @@
 package nordnetservice.domain.core;
 
 import nordnetservice.adapter.CritterAdapter;
-import nordnetservice.adapter.NordnetAdapter;
 import nordnetservice.adapter.RedisAdapter;
 import nordnetservice.critter.stockoption.StockOptionPurchase;
+import nordnetservice.domain.repository.NordnetRepository;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.PurchaseType;
@@ -16,20 +16,20 @@ import java.util.List;
 
 @Component
 public class Core {
-    private final NordnetAdapter nordnetAdapter;
+    private final NordnetRepository nordnetRepository;
     private final CritterAdapter critterAdapter;
     private final RedisAdapter redisAdapter;
 
-    public Core(NordnetAdapter nordnetAdapter,
+    public Core(NordnetRepository nordnetRepository,
                 CritterAdapter critterAdapter,
                 RedisAdapter redisAdapter) {
-        this.nordnetAdapter = nordnetAdapter;
+        this.nordnetRepository = nordnetRepository;
         this.critterAdapter = critterAdapter;
         this.redisAdapter = redisAdapter;
     }
 
     public Tuple2<StockPrice, StockOption> findOption(StockOptionTicker ticker) {
-        return nordnetAdapter.findOption(ticker);
+        return nordnetRepository.findOption(ticker);
     }
 
     public List<StockOptionPurchase> fetchCritters(PurchaseType purchaseType) {
@@ -37,11 +37,13 @@ public class Core {
     }
 
     public List<StockOption> getCalls(StockTicker ticker) {
-        return null;
-
+        return nordnetRepository.getCalls(ticker);
     }
 
+    public List<StockOption> getPuts(StockTicker ticker) {
+        return nordnetRepository.getPuts(ticker);
+    }
     public StockPrice getStockPrice(StockTicker ticker) {
-        return null;
+        return nordnetRepository.getStockPrice(ticker);
     }
 }

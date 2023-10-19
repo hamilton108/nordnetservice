@@ -6,6 +6,6 @@ import nordnetservice.domain.stockoption.StockOption;
 
 import java.util.List;
 
-public record CallsResponse(@JsonGetter("stockprice") StockPrice price,
-                            @JsonGetter("opx") List<StockOption> options) {
+public record CallsResponse(@JsonGetter("stockprice") StockPriceDTO price,
+                            @JsonGetter("opx") List<StockOptionDTO> options) {
 }

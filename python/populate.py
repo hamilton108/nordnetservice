@@ -35,21 +35,7 @@ TICKERS = {
 
 
 def expiry(db):
-    if db == 5:
-        result = [
-            # 1618524000000,
-            # 1621548000000,
-            # 1623967200000,
-            # 1631829600000,
-            # 1639695600000,
-            # 1671145200000,
-            1674169200000,
-            1676588400000,
-            1679007600000,
-            1686866400000,
-            1694728800000,
-        ]
-    elif db == 0:
+    if db == 0:
         result = [
             1674169200000,
             1676588400000,
@@ -64,6 +50,24 @@ def expiry(db):
             1679007600000,
             1686866400000,
             1694728800000,
+        ]
+    elif db == 5:
+        result = [
+            # 1618524000000,
+            # 1621548000000,
+            # 1623967200000,
+            # 1631829600000,
+            # 1639695600000,
+            # 1671145200000,
+            1674169200000,
+            1676588400000,
+            1679007600000,
+            1686866400000,
+            1694728800000,
+        ]
+    elif db == 6:
+        result = [
+            1718920800000,
         ]
     else:
         raise Exception("No such db: %d" % db)
@@ -134,10 +138,6 @@ def populate(args):
     if args.flush_all == True:
         r.flushall()
     print(args)
-    """
-    if args.add_tickers == True:
-        populate_tickers(r)
-    """
     if args.add_expiry == True:
         populate_expiry(args.db, r)
     if args.add_opening_prices == True:
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     #parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
     
     parser.add_argument('--db', dest='db', metavar='DB', type=int,
-                        default=4, help='Redis db: prod=0, demo=4, test=5. Default: demo')
+                        default=4, help='Redis db: prod = 0, demo = 4, test = 5, real time = 6. Default: 4 (demo)')
 
     parser.add_argument('--flushall', dest='flush_all', action='store_true',
                         default=False, help='Flush Redis cache before populate. default: false')
