@@ -1,8 +1,10 @@
-package nordnetservice.adapter;
+package nordnetservice.adapter.nordnet;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import nordnetservice.adapter.RedisAdapter;
 import nordnetservice.domain.downloader.Downloader;
+import nordnetservice.domain.repository.NordnetRepository;
 import nordnetservice.dto.Tuple2;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
@@ -13,6 +15,7 @@ import nordnetservice.util.ListUtil;
 import nordnetservice.util.StockOptionUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import nordnetservice.domain.html.PageInfo;
@@ -27,8 +30,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 
-@Component
-public class NordnetAdapter {
+@Component("v1")
+public class NordnetAdapter implements NordnetRepository  {
     private static final int SP_CLS = 4;
     private static final int SP_HI = 7;
     private static final int SP_LO = 8;
@@ -43,19 +46,22 @@ public class NordnetAdapter {
     private final Downloader<PageInfo> downloader;
     private final RedisAdapter redisAdapter;
     private final LocalDate curDate;
-    private final OptionCalculator calculator;
+    private final OptionCalculator blackScholes;
+    private final OptionCalculator binomialTree;
     private final Cache<Integer, Tuple2<StockPrice,List<StockOption>>> cacheStockOptions;
     private final Cache<String, Tuple2<StockPrice,List<StockOption>>> cacheStockOption;
 
     public NordnetAdapter(Downloader<PageInfo> downloaderAdapter,
                           RedisAdapter redisAdapter,
-                          OptionCalculator calculator,
+                          @Qualifier("blackScholes") OptionCalculator blackScholes,
+                          @Qualifier("binomialTree") OptionCalculator binomialTree,
                           @Value("${curdate}") String curDateStr,
                           @Value("${cache.options.expiry}") int optionsExpiry,
                           @Value("${cache.option.expiry}") int optionExpiry) {
         this.downloader = downloaderAdapter;
         this.redisAdapter = redisAdapter;
-        this.calculator = calculator;
+        this.blackScholes = blackScholes;
+        this.binomialTree = binomialTree;
         if (curDateStr == null || curDateStr.equals("today")) {
             curDate = LocalDate.now();
         }
@@ -105,7 +111,7 @@ public class NordnetAdapter {
         var bid = el2double(ch.get(indexBid));
         var ask = el2double(ch.get(indexAsk));
         var isoAndDays = StockOptionUtil.iso8601andDays(ticker, curDate);
-        return  new StockOption(ticker, ot, x, bid, ask, isoAndDays.second(), isoAndDays.first(), stockPrice, calculator);
+        return  new StockOption(ticker, ot, x, bid, ask, isoAndDays.second(), isoAndDays.first(), stockPrice, blackScholes);
     }
 
     private StockOption parseCall(StockPrice stockPrice, Element el) {
@@ -199,14 +205,17 @@ public class NordnetAdapter {
         return result.second().stream().filter(x -> x.getOpType() == ot).toList();
     }
 
+    @Override
     public List<StockOption> getCalls(StockTicker ticker) {
         return getOptions(ticker, StockOptionType.CALL);
     }
 
+    @Override
     public List<StockOption> getPuts(StockTicker ticker) {
         return getOptions(ticker, StockOptionType.PUT);
     }
 
+    @Override
     public StockPrice getStockPrice(StockTicker ticker) {
         var result = parse(ticker);
         return result.first();
@@ -216,6 +225,8 @@ public class NordnetAdapter {
         return String.format("%d:%d", info.getStockTicker().oid(), info.getNordnetMillis());
     }
 
+
+    @Override
     public Tuple2<StockPrice,StockOption> findOption(StockOptionTicker ticker) {
 
         var info = StockOptionUtil.stockOptionInfoFromTicker(ticker);

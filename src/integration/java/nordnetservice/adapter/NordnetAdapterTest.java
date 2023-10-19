@@ -1,5 +1,6 @@
 package nordnetservice.adapter;
 
+import nordnetservice.adapter.nordnet.NordnetAdapter;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;

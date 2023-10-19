@@ -5,8 +5,6 @@ import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.html.PageInfo;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOptionTicker;
-import nordnetservice.util.NordnetUtil;
-import nordnetservice.util.StockOptionUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;

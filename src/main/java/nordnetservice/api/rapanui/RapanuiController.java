@@ -27,8 +27,10 @@ public class RapanuiController {
     public FindOptionResponse findOption(@PathVariable("ticker") String ticker) {
         var result = core.findOption(new StockOptionTicker(ticker));
 
-        return new FindOptionResponse(new FindOptionItem(result.second().getBid(), result.second().getAsk()),
-                StockOptionType.CALL.getIndex(),
-                StockOptionType.CALL.getValue());
+        var opt = result.second();
+        return new FindOptionResponse(new FindOptionItem(opt.getBid(),
+                opt.getAsk()),
+                opt.getOpType().getIndex(),
+                opt.getOpType().getValue());
     }
 }
