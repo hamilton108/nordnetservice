@@ -1,5 +1,6 @@
 package nordnetservice.adapter;
 
+import nordnetservice.adapter.downloader.DefaultDownloaderAdapter;
 import nordnetservice.adapter.nordnet.NordnetAdapter;
 import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.html.PageInfo;
@@ -27,14 +28,16 @@ public class NordnetAdapterRealTimeTest {
     @Autowired
     RedisAdapter redisAdapter;
 
+    /*
     @Autowired
     Downloader<PageInfo> downloader;
+     */
 
     NordnetAdapter nordnetAdapter;
 
     @BeforeEach
     void init() {
-        //Downloader<PageInfo> downloader = new DefaultDownloaderAdapter();
+        Downloader<PageInfo> downloader = new DefaultDownloaderAdapter();
         OptionCalculator blackScholes = new BlackScholes();
         OptionCalculator binomialTree = new BinomialTreeCalculator();
 
@@ -59,6 +62,10 @@ public class NordnetAdapterRealTimeTest {
 
     private void checkStockPrice(StockPrice stockPrice) {
         assertNotNull(stockPrice);
+        assertTrue(stockPrice.opn() > 0);
+        assertTrue(stockPrice.hi() > 0);
+        assertTrue(stockPrice.lo() > 0);
+        assertTrue(stockPrice.cls() > 0);
     }
     private void checkCalls(List<StockOption> calls) {
         assertNotNull(calls);

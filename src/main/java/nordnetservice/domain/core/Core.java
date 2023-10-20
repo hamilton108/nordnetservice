@@ -10,6 +10,7 @@ import nordnetservice.domain.stockoption.PurchaseType;
 import nordnetservice.domain.stockoption.StockOption;
 import nordnetservice.domain.stockoption.StockOptionTicker;
 import nordnetservice.dto.Tuple2;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class Core {
     private final CritterAdapter critterAdapter;
     private final RedisAdapter redisAdapter;
 
-    public Core(NordnetRepository nordnetRepository,
+    public Core(@Qualifier("v1") NordnetRepository nordnetRepository,
                 CritterAdapter critterAdapter,
                 RedisAdapter redisAdapter) {
         this.nordnetRepository = nordnetRepository;

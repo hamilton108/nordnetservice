@@ -124,8 +124,9 @@ public class NordnetAdapter implements NordnetRepository  {
         var callFn = new StockOptionCreator(StockOptionType.CALL, sp, this);
         var putFn = new StockOptionCreator(StockOptionType.PUT, sp, this);
         var rows = el.children();
-        var calls = rows.stream().skip(1).map(callFn).filter(Objects::nonNull).toList();
-        var puts = rows.stream().skip(1).map(putFn).filter(Objects::nonNull).toList();
+        var rows2 = rows.get(0).children();
+        var calls = rows2.stream().skip(1).map(callFn).filter(Objects::nonNull).toList();
+        var puts = rows2.stream().skip(1).map(putFn).filter(Objects::nonNull).toList();
         return Stream.concat(calls.stream(), puts.stream()).toList();
     }
 
