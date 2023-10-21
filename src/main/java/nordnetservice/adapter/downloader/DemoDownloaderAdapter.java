@@ -1,5 +1,6 @@
 package nordnetservice.adapter.downloader;
 
+import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.html.PageInfo;
@@ -41,21 +42,34 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
     public List<PageInfo> download(StockTicker ticker) {
         if (result == null) {
 
-            try {
-                var page = client.getPage(testUrl);
-                var content = page.getWebResponse().getContentAsString();
-                var info = new PageInfo(content);
+            if (isV1) {
+                try {
+                    var page = client.getPage(testUrl);
+                    var content = page.getWebResponse().getContentAsString();
+                    var info = new PageInfo(content);
 
-                if (testUrl2 == null) {
-                    result = Collections.singletonList(info);
-                } else {
-                    var page2 = client.getPage(testUrl2);
-                    var content2 = page2.getWebResponse().getContentAsString();
-                    var info2 = new PageInfo(content2);
-                    result = Arrays.asList(info, info2);
+                    if (testUrl2 == null) {
+                        result = Collections.singletonList(info);
+                    } else {
+                        var page2 = client.getPage(testUrl2);
+                        var content2 = page2.getWebResponse().getContentAsString();
+                        var info2 = new PageInfo(content2);
+                        result = Arrays.asList(info, info2);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            }
+            else {
+                Page page = null;
+                try {
+                    page = client.getPage(testUrl3);
+                    var content = page.getWebResponse().getContentAsString();
+                    var info = new PageInfo(content);
+                    result = Collections.singletonList(info);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 

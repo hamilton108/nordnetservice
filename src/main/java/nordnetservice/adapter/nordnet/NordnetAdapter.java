@@ -1,16 +1,14 @@
 package nordnetservice.adapter.nordnet;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import nordnetservice.adapter.RedisAdapter;
 import nordnetservice.domain.downloader.Downloader;
+import nordnetservice.domain.html.PageInfo;
 import nordnetservice.domain.repository.NordnetRepository;
-import nordnetservice.dto.Tuple2;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;
-import nordnetservice.domain.stockoption.StockOptionInfo;
 import nordnetservice.domain.stockoption.StockOptionTicker;
+import nordnetservice.dto.Tuple2;
 import nordnetservice.util.ListUtil;
 import nordnetservice.util.StockOptionUtil;
 import org.jsoup.Jsoup;
@@ -18,38 +16,34 @@ import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import nordnetservice.domain.html.PageInfo;
 import vega.financial.StockOptionType;
 import vega.financial.calculator.OptionCalculator;
 
 import java.time.LocalDate;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 
 @Component("v1")
-public class NordnetAdapter implements NordnetRepository  {
+public class NordnetAdapter extends NordnetAdapterBase implements NordnetRepository  {
     private static final int SP_CLS = 4;
     private static final int SP_HI = 7;
     private static final int SP_LO = 8;
+    private static final int X = 7;
+
     private static final int CALL_TICKER = 1;
     private static final int CALL_BID = 3;
     private static final int CALL_ASK = 4;
-    private static final int X = 7;
     private static final int PUT_BID = 9;
     private static final int PUT_ASK = 10;
     private static final int PUT_TICKER = 13;
-    private final Pattern pat = Pattern.compile("Norway\\s*(\\S*)");
-    private final Downloader<PageInfo> downloader;
     private final RedisAdapter redisAdapter;
     private final LocalDate curDate;
     private final OptionCalculator blackScholes;
     private final OptionCalculator binomialTree;
-    private final Cache<Integer, Tuple2<StockPrice,List<StockOption>>> cacheStockOptions;
-    private final Cache<String, Tuple2<StockPrice,List<StockOption>>> cacheStockOption;
 
     public NordnetAdapter(Downloader<PageInfo> downloaderAdapter,
                           RedisAdapter redisAdapter,
@@ -58,7 +52,7 @@ public class NordnetAdapter implements NordnetRepository  {
                           @Value("${curdate}") String curDateStr,
                           @Value("${cache.options.expiry}") int optionsExpiry,
                           @Value("${cache.option.expiry}") int optionExpiry) {
-        this.downloader = downloaderAdapter;
+        super(downloaderAdapter, optionsExpiry, optionExpiry);
         this.redisAdapter = redisAdapter;
         this.blackScholes = blackScholes;
         this.binomialTree = binomialTree;
@@ -68,35 +62,10 @@ public class NordnetAdapter implements NordnetRepository  {
         else {
             curDate = LocalDate.parse(curDateStr);
         }
-        cacheStockOptions = Caffeine.newBuilder().expireAfterWrite(optionsExpiry, TimeUnit.MINUTES).build();
-        cacheStockOption = Caffeine.newBuilder().expireAfterWrite(optionExpiry, TimeUnit.SECONDS).build();
     }
 
-    private String elementText(Element el) {
-        return el.children().get(0).text();
-    }
-    private StockOptionTicker el2ticker(Element el) {
-        var m = pat.matcher(elementText(el));
-        if (m.matches()) {
-            return new StockOptionTicker(m.group(1));
-        }
-        else {
-            return null;
-        }
-    }
 
-    private double el2double(Element el) {
-        var tx = elementText(el);
-        var digits = tx.split(",");
-        if (digits.length == 2) {
-            return Double.parseDouble(String.format("%s.%s", digits[0], digits[1]));
-        }
-        else {
-            return -1.0;
-        }
-    }
-
-    private StockOption parseOption(int indexTicker,
+    protected StockOption parseOption(int indexTicker,
                                     int indexBid,
                                     int indexAsk,
                                     StockOptionType ot,
@@ -114,19 +83,19 @@ public class NordnetAdapter implements NordnetRepository  {
         return  new StockOption(ticker, ot, x, bid, ask, isoAndDays.second(), isoAndDays.first(), stockPrice, blackScholes);
     }
 
-    private StockOption parseCall(StockPrice stockPrice, Element el) {
-        return parseOption(CALL_TICKER, CALL_BID, CALL_ASK, StockOptionType.CALL, stockPrice, el);
-    }
     private StockOption parsePut(StockPrice stockPrice, Element el) {
         return parseOption(PUT_TICKER, PUT_BID, PUT_ASK, StockOptionType.PUT, stockPrice, el);
+    }
+    protected StockOption parseCall(StockPrice stockPrice, Element el) {
+        return parseOption(CALL_TICKER, CALL_BID, CALL_ASK, StockOptionType.CALL, stockPrice, el);
     }
     private List<StockOption> parseOptions(StockPrice sp, Element el) {
         var callFn = new StockOptionCreator(StockOptionType.CALL, sp, this);
         var putFn = new StockOptionCreator(StockOptionType.PUT, sp, this);
         var rows = el.children();
-        var rows2 = rows.get(0).children();
-        var calls = rows2.stream().skip(1).map(callFn).filter(Objects::nonNull).toList();
-        var puts = rows2.stream().skip(1).map(putFn).filter(Objects::nonNull).toList();
+        //var rows2 = rows.get(0).children();
+        var calls = rows.stream().skip(1).map(callFn).filter(Objects::nonNull).toList();
+        var puts = rows.stream().skip(1).map(putFn).filter(Objects::nonNull).toList();
         return Stream.concat(calls.stream(), puts.stream()).toList();
     }
 
@@ -222,9 +191,6 @@ public class NordnetAdapter implements NordnetRepository  {
         return result.first();
     }
 
-    private String keyFor(StockOptionInfo info) {
-        return String.format("%d:%d", info.getStockTicker().oid(), info.getNordnetMillis());
-    }
 
 
     @Override
@@ -258,27 +224,9 @@ public class NordnetAdapter implements NordnetRepository  {
             return null;
         }
 
-        /*
-            var tickerS = ticker.value();
-
-            var opt = options.second().stream().filter(s -> s.getTicker().value().equals(tickerS)).findFirst();
-
-            if (opt.isPresent()) {
-                var newCached = new Tuple2<StockPrice,StockOption>(options.first(), opt.get());
-                cacheStockOption.put(info.getStockTicker().oid(), newCached);
-                return newCached;
-            }
-            else {
-                return Optional.empty();
-            }
-
-        }
-        return Optional.of(hit);
-
-         */
     }
 
-    private record ParsePageClosure(StockPrice stockPrice,
+    record ParsePageClosure(StockPrice stockPrice,
                                     NordnetAdapter adapter) implements Function<PageInfo, List<StockOption>> {
         @Override
         public List<StockOption> apply(PageInfo page) {
@@ -286,7 +234,7 @@ public class NordnetAdapter implements NordnetRepository  {
         }
     }
 
-    private record StockOptionCreator(StockOptionType ot,
+    record StockOptionCreator(StockOptionType ot,
                                       StockPrice stockPrice,
                                       NordnetAdapter adapter) implements Function<Element, StockOption> {
         @Override
