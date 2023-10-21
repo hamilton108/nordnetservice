@@ -20,13 +20,17 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
     private final WebClient client;
     private final String testUrl;
     private final String testUrl2;
+    private final String testUrl3;
+    private boolean isV1 = true;
 
     public DemoDownloaderAdapter(@Value("${url.test}") String testUrl,
-                                 @Value("${url.test.2:#{null}}") String testUrl2) {
+                                 @Value("${url.test.2:#{null}}") String testUrl2,
+                                 @Value("${url.test.3:#{null}}") String testUrl3) {
         System.out.println(testUrl);
         System.out.println(testUrl2);
         this.testUrl = testUrl;
         this.testUrl2 = testUrl2;
+        this.testUrl3 = testUrl3;
 
         this.client = new WebClient();
         this.client.getOptions().setJavaScriptEnabled(false);
@@ -83,4 +87,11 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
         }
     }
 
+    public boolean isV1() {
+        return isV1;
+    }
+
+    public void setV1(boolean value) {
+        isV1 = value;
+    }
 }
