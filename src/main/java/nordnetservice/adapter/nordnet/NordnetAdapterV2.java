@@ -14,9 +14,12 @@ import vega.financial.StockOptionType;
 
 import java.util.List;
 
-@Component("v2")
-public class NordnetAdapterV2 extends NordnetAdapterBase implements NordnetRepository  {
+//public class NordnetAdapterV2 extends NordnetAdapterBase implements NordnetRepository  {
 
+@Component("v2")
+public class NordnetAdapterV2 {
+
+        /*
     private final Downloader<PageInfo> downloaderAdapter;
 
     public NordnetAdapterV2(Downloader<PageInfo> downloaderAdapter) {
@@ -48,12 +51,9 @@ public class NordnetAdapterV2 extends NordnetAdapterBase implements NordnetRepos
         var result = parse(ticker);
         return result.second().stream().filter(x -> x.getOpType() == ot).toList();
     }
-    private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker) {
+    protected Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker) {
         return null;
     }
 
-    @Override
-    protected StockOption parseOption(int indexTicker, int indexBid, int indexAsk, StockOptionType ot, StockPrice stockPrice, Element el) {
-        return null;
-    }
+         */
 }

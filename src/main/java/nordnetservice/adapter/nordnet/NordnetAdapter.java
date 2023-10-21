@@ -118,7 +118,8 @@ public class NordnetAdapter extends NordnetAdapterBase implements NordnetReposit
     }
      */
 
-    private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker, PageInfo page) {
+    @Override
+    protected Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker, PageInfo page) {
         var soup = Jsoup.parse(page.body());
         var roleTable = soup.select("[role=table]");
         var sp = parseStockPrice(ticker, roleTable.get(0));
@@ -126,48 +127,11 @@ public class NordnetAdapter extends NordnetAdapterBase implements NordnetReposit
         return new Tuple2<>(sp, options);
     }
 
-    private List<StockOption> parsePage(StockPrice stockPrice, PageInfo page) {
+    @Override
+    protected List<StockOption> parsePage(StockPrice stockPrice, PageInfo page) {
         var soup = Jsoup.parse(page.body());
         var roleTable = soup.select("[role=table]");
         return parseOptions(stockPrice, roleTable.get(1));
-    }
-
-    private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker) {
-
-        var hit = cacheStockOptions.getIfPresent(ticker.oid());
-
-        if (hit == null) {
-            var pages = downloader.download(ticker);
-            if (pages.size() == 0) {
-                return new Tuple2<>(null, Collections.emptyList());
-            }
-            var page = pages.get(0);
-
-            var result0 = parse(ticker, page);
-
-            if (pages.size() > 1) {
-
-                var parsePageClosure = new ParsePageClosure(result0.first(), this);
-
-                var restList = pages.stream().skip(1).map(parsePageClosure).toList();
-
-                var result = ListUtil.joinLists(result0.second(), restList);
-
-                var newCached = new Tuple2<>(result0.first(), result);
-
-                cacheStockOptions.put(ticker.oid(), newCached);
-
-                return newCached;
-            }
-            else {
-                cacheStockOptions.put(ticker.oid(), result0);
-
-                return result0;
-            }
-        }
-        else {
-            return hit;
-        }
     }
 
     private List<StockOption> getOptions(StockTicker ticker, StockOptionType ot) {
@@ -175,6 +139,7 @@ public class NordnetAdapter extends NordnetAdapterBase implements NordnetReposit
         return result.second().stream().filter(x -> x.getOpType() == ot).toList();
     }
 
+    //--------------------------- NordnetRepository BEGIN ---------------------------
     @Override
     public List<StockOption> getCalls(StockTicker ticker) {
         return getOptions(ticker, StockOptionType.CALL);
@@ -191,48 +156,8 @@ public class NordnetAdapter extends NordnetAdapterBase implements NordnetReposit
         return result.first();
     }
 
+    //--------------------------- NordnetRepository END ---------------------------
 
-
-    @Override
-    public Tuple2<StockPrice,StockOption> findOption(StockOptionTicker ticker) {
-
-        var info = StockOptionUtil.stockOptionInfoFromTicker(ticker);
-
-        var key = keyFor(info);
-
-        var hit = cacheStockOption.getIfPresent(key);
-
-        if (hit == null) {
-
-            var page = downloader.download(ticker);
-
-            Tuple2<StockPrice, List<StockOption>> options = parse(info.getStockTicker(), page);
-
-            cacheStockOption.put(key, options);
-
-            hit = options;
-        }
-
-        var tickerS = ticker.value();
-
-        var opt = hit.second().stream().filter(s -> s.getTicker().value().equals(tickerS)).findFirst();
-
-        if (opt.isPresent()) {
-            return new Tuple2<>(hit.first(), opt.get());
-        }
-        else {
-            return null;
-        }
-
-    }
-
-    record ParsePageClosure(StockPrice stockPrice,
-                                    NordnetAdapter adapter) implements Function<PageInfo, List<StockOption>> {
-        @Override
-        public List<StockOption> apply(PageInfo page) {
-            return adapter.parsePage(stockPrice, page);
-        }
-    }
 
     record StockOptionCreator(StockOptionType ot,
                                       StockPrice stockPrice,
