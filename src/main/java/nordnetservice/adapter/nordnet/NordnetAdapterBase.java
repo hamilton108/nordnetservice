@@ -14,6 +14,7 @@ import nordnetservice.dto.Tuple2;
 import nordnetservice.util.ListUtil;
 import nordnetservice.util.StockOptionUtil;
 import org.jsoup.nodes.Element;
+import vega.financial.StockOptionType;
 
 import java.util.Collections;
 import java.util.List;
@@ -134,15 +135,29 @@ public abstract class NordnetAdapterBase implements NordnetRepository {
         }
     }
 
-
     protected abstract Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker, PageInfo page);
     protected abstract List<StockOption> parsePage(StockPrice stockPrice, PageInfo page);
+    protected abstract StockOption parseCall(StockPrice stockPrice, Element el);
+    protected abstract StockOption parsePut(StockPrice stockPrice, Element el);
 
-    protected record ParsePageClosure(StockPrice stockPrice,
+    record ParsePageClosure(StockPrice stockPrice,
                             NordnetAdapterBase adapter) implements Function<PageInfo, List<StockOption>> {
         @Override
         public List<StockOption> apply(PageInfo page) {
             return adapter.parsePage(stockPrice, page);
+        }
+    }
+    record StockOptionCreator(StockOptionType ot,
+                              StockPrice stockPrice,
+                              NordnetAdapterBase adapter) implements Function<Element, StockOption> {
+        @Override
+        public StockOption apply(Element element) {
+            if (ot == StockOptionType.CALL) {
+                return adapter.parseCall(stockPrice, element);
+            }
+            else {
+                return adapter.parsePut(stockPrice, element);
+            }
         }
     }
 }

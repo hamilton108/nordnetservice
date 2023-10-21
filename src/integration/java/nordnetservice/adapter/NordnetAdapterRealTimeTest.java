@@ -1,7 +1,8 @@
 package nordnetservice.adapter;
 
-import nordnetservice.adapter.downloader.DefaultDownloaderAdapter;
-import nordnetservice.adapter.nordnet.NordnetAdapterV2;
+import nordnetservice.adapter.downloader.HtmlUnitDownloaderAdapter;
+import nordnetservice.adapter.downloader.HttpClientDownloaderAdapter;
+import nordnetservice.adapter.nordnet.NordnetAdapter;
 import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.html.PageInfo;
 import nordnetservice.domain.stock.StockPrice;
@@ -33,18 +34,17 @@ public class NordnetAdapterRealTimeTest {
     Downloader<PageInfo> downloader;
      */
 
-    NordnetAdapterV2 nordnetAdapter;
+    NordnetAdapter nordnetAdapter;
 
     @BeforeEach
     void init() {
-        Downloader<PageInfo> downloader = new DefaultDownloaderAdapter();
+        Downloader<PageInfo> downloader = new HtmlUnitDownloaderAdapter(); //HttpClientDownloaderAdapter();
         //((DefaultDownloaderAdapter)downloader)
         OptionCalculator blackScholes = new BlackScholes();
         OptionCalculator binomialTree = new BinomialTreeCalculator();
 
-        /*
         nordnetAdapter =
-                new NordnetAdapterV2(downloader,
+                new NordnetAdapter(downloader,
                         redisAdapter,
                         blackScholes,
                         binomialTree,
@@ -52,14 +52,12 @@ public class NordnetAdapterRealTimeTest {
                         30,
                         600);
 
-         */
-
     }
 
     @Test
     void test_parse_real_time() {
-        //var calls = nordnetAdapter.getCalls(stockTicker);
-        //checkCalls(calls);
+        var calls = nordnetAdapter.getCalls(stockTicker);
+        checkCalls(calls);
         //var stockPrice = nordnetAdapter.getStockPrice(stockTicker);
         //checkStockPrice(stockPrice);
     }

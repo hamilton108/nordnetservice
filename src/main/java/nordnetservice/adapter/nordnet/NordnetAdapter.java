@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 
 
 @Component("v1")
-public class NordnetAdapter extends NordnetAdapterBase implements NordnetRepository  {
+public class NordnetAdapter extends NordnetAdapterBase {
     private static final int SP_CLS = 4;
     private static final int SP_HI = 7;
     private static final int SP_LO = 8;
@@ -65,7 +65,7 @@ public class NordnetAdapter extends NordnetAdapterBase implements NordnetReposit
     }
 
 
-    protected StockOption parseOption(int indexTicker,
+    private StockOption parseOption(int indexTicker,
                                     int indexBid,
                                     int indexAsk,
                                     StockOptionType ot,
@@ -83,12 +83,16 @@ public class NordnetAdapter extends NordnetAdapterBase implements NordnetReposit
         return  new StockOption(ticker, ot, x, bid, ask, isoAndDays.second(), isoAndDays.first(), stockPrice, blackScholes);
     }
 
-    private StockOption parsePut(StockPrice stockPrice, Element el) {
+    @Override
+    protected StockOption parsePut(StockPrice stockPrice, Element el) {
         return parseOption(PUT_TICKER, PUT_BID, PUT_ASK, StockOptionType.PUT, stockPrice, el);
     }
+
+    @Override
     protected StockOption parseCall(StockPrice stockPrice, Element el) {
         return parseOption(CALL_TICKER, CALL_BID, CALL_ASK, StockOptionType.CALL, stockPrice, el);
     }
+
     private List<StockOption> parseOptions(StockPrice sp, Element el) {
         var callFn = new StockOptionCreator(StockOptionType.CALL, sp, this);
         var putFn = new StockOptionCreator(StockOptionType.PUT, sp, this);
@@ -109,14 +113,6 @@ public class NordnetAdapter extends NordnetAdapterBase implements NordnetReposit
         var cls = el2double(rc.get(SP_CLS));
         return new StockPrice(opn, hi, lo, cls);
     }
-
-    /*
-    private List<StockOption> parse(StockPrice stockPrice, PageInfo page) {
-        var soup = Jsoup.parse(page.body());
-        var roleTable = soup.select("[role=table]");
-        return parseOptions(stockPrice, roleTable.get(1));
-    }
-     */
 
     @Override
     protected Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker, PageInfo page) {
@@ -158,18 +154,4 @@ public class NordnetAdapter extends NordnetAdapterBase implements NordnetReposit
 
     //--------------------------- NordnetRepository END ---------------------------
 
-
-    record StockOptionCreator(StockOptionType ot,
-                                      StockPrice stockPrice,
-                                      NordnetAdapter adapter) implements Function<Element, StockOption> {
-        @Override
-            public StockOption apply(Element element) {
-                if (ot == StockOptionType.CALL) {
-                    return adapter.parseCall(stockPrice, element);
-                }
-                else {
-                    return adapter.parsePut(stockPrice, element);
-                }
-            }
-        }
 }
