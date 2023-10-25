@@ -1,11 +1,12 @@
 #!/bin/bash
 
-NORDNET="rcs/nordnetservice:0.9.0"
-ROOT="0"
+NORDNET="rcs/nordnetservice:1.0.0"
+ROOT="1"
 NETWORK="pgutil_lofsrud"
 
 # docker run -it --rm --network $NETWORK --ip 172.20.1.9 -v $opt:$opt -w $WD $JAVA_VER /bin/sh
 #
+
 if [ "$ROOT" = "1" ]; then
   docker run --rm --network $NETWORK $NORDNET
 else

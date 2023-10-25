@@ -1,11 +1,24 @@
 package nordnetservice.adapter.downloader;
 
-import org.apache.http.HttpStatus;
+import java.net.URL;
 
 public class DownloadException extends RuntimeException {
     private final int httpStatus;
-    public DownloadException(int httpStatus) {
+    private final URL url;
+
+    public DownloadException(URL url, int httpStatus) {
         super();
+
+        this.url = url;
         this.httpStatus = httpStatus;
+
+    }
+
+    public int getHttpStatus() {
+        return httpStatus;
+    }
+
+    public URL getUrl() {
+        return url;
     }
 }

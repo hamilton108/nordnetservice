@@ -14,19 +14,19 @@ public class StockOptionDTO {
     public double getX() {
         return stockOption.getX();
     }
-    public double getBuy() {
+    public double getBid() {
         return stockOption.getBid();
     }
-    public double getSell() {
+    public double getAsk() {
         return stockOption.getAsk();
     }
     public long getDays() {
         return stockOption.getDays();
     }
-    public double getIvBuy() {
+    public double getIvBid() {
         return stockOption.getIvBid();
     }
-    public double getIvSell() {
+    public double getIvAsk() {
         return stockOption.getIvAsk();
     }
     public double getBrEven() {

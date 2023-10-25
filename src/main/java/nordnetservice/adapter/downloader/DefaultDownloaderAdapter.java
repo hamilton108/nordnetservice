@@ -7,6 +7,8 @@ import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOptionTicker;
 import nordnetservice.util.NordnetUtil;
 import org.apache.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -17,12 +19,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Component
 @Profile("prod")
 public class DefaultDownloaderAdapter  implements  Downloader<PageInfo> {
+    private final Logger logger = LoggerFactory.getLogger(DefaultDownloaderAdapter.class);
 
     private HttpClient client;
 
@@ -44,7 +46,7 @@ public class DefaultDownloaderAdapter  implements  Downloader<PageInfo> {
                 result.add(page);
             }
             catch (DownloadException e) {
-
+                logger.warn(String.format("(%s) Could not download, status: %d", e.getUrl(), e.getHttpStatus()));
             }
         }
 
@@ -58,7 +60,7 @@ public class DefaultDownloaderAdapter  implements  Downloader<PageInfo> {
                     HttpRequest.newBuilder(url.toURI()).GET().build();
             HttpResponse<String> response = getClient().send(req, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != HttpStatus.SC_OK) {
-                throw new DownloadException(response.statusCode());
+                throw new DownloadException(url, response.statusCode());
             }
             return new PageInfo(response.body());
         } catch (IOException | InterruptedException | URISyntaxException e) {

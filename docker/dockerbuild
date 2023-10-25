@@ -3,7 +3,7 @@
 # VERSION=0.0.1-SNAPSHOT
 # docker build --build-arg VERSION=$VERSION -t rcs/nordnetservice:$VERSIONX .
 
-docker build -t rcs/nordnetservice:0.9.0 .
+docker build -t rcs/nordnetservice:1.0.0 .
 
 exit 0
 
