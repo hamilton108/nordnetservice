@@ -4,6 +4,7 @@ import nordnetservice.adapter.CritterAdapter;
 import nordnetservice.adapter.RedisAdapter;
 import nordnetservice.critter.stockoption.StockOptionPurchase;
 import nordnetservice.domain.repository.NordnetRepository;
+import nordnetservice.domain.stock.OpeningPrice;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.PurchaseType;
@@ -45,5 +46,8 @@ public class Core {
     }
     public StockPrice getStockPrice(StockTicker ticker) {
         return nordnetRepository.getStockPrice(ticker);
+    }
+    public OpeningPrice openingPrice(StockTicker ticker) {
+        return nordnetRepository.openingPrice(ticker);
     }
 }

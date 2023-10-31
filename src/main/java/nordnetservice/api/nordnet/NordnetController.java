@@ -1,9 +1,11 @@
 package nordnetservice.api.nordnet;
 
+import nordnetservice.api.nordnet.dto.OpeningPriceDTO;
 import nordnetservice.api.nordnet.response.CallsResponse;
 import nordnetservice.api.nordnet.response.StockOptionDTO;
 import nordnetservice.api.nordnet.response.StockPriceDTO;
 import nordnetservice.domain.core.Core;
+import nordnetservice.domain.stock.OpeningPrice;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;
@@ -26,6 +28,14 @@ public class NordnetController {
 
     public NordnetController(Core core) {
         this.core = core;
+    }
+
+    @ResponseBody
+    @GetMapping(value = "/openingprice/{oid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public OpeningPriceDTO openingPrice(@PathVariable("oid") int oid) {
+        var ticker = new StockTicker(oid);
+        OpeningPrice price = core.openingPrice(ticker);
+        return new OpeningPriceDTO(price);
     }
 
     @ResponseBody

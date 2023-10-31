@@ -73,6 +73,12 @@ public class DefaultDownloaderAdapter  implements  Downloader<PageInfo> {
         return null;
     }
 
+    @Override
+    public PageInfo downloadOne(StockTicker ticker) {
+        var nordnetMillis = redisAdapter.nordnetMillisForUrl(LocalDate.now());
+        return download(ticker, nordnetMillis.get(0));
+    }
+
     private HttpClient getClient() {
         if (client == null) {
             client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();

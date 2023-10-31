@@ -6,6 +6,7 @@ import argparse
 REDIS_PROD = 0
 REDIS_DEMO = 4
 REDIS_TEST = 5
+REDIS_INTEGRATION = 6
 
 TICKERS = {
     # "AKERBP": 1,
@@ -35,7 +36,15 @@ TICKERS = {
 
 
 def expiry(db):
-    if db == 0:
+    if db == REDIS_PROD:
+        result = [
+            #1702594800000,
+            #1705618800000,
+            #1710457200000,
+            #1718920800000,
+            1726783200000
+        ]
+    elif db == REDIS_DEMO:
         result = [
             1674169200000,
             1676588400000,
@@ -43,15 +52,7 @@ def expiry(db):
             1686866400000,
             1694728800000,
         ]
-    elif db == 4:
-        result = [
-            1674169200000,
-            1676588400000,
-            1679007600000,
-            1686866400000,
-            1694728800000,
-        ]
-    elif db == 5:
+    elif db == REDIS_TEST:
         result = [
             # 1618524000000,
             # 1621548000000,
@@ -65,7 +66,7 @@ def expiry(db):
             1686866400000,
             1694728800000,
         ]
-    elif db == 6:
+    elif db == REDIS_INTEGRATION:
         result = [
             1718920800000,
         ]
@@ -125,10 +126,10 @@ def populate_splu(r):
     r.hset(redis_key, "EQNR", "1620594773")
 
 def populate_test_url(db, r):
-    if db == 4:
+    if db == REDIS_DEMO:
         redis_key = "demo-url"
         redis_val =  "file:////home/rcs/opt/java/nordnetservice/test/resources/html/yar2.html"
-    elif db == 5:
+    elif db == REDIS_TEST:
         redis_key = "test-url"
         redis_val =  "file:////home/rcs/opt/java/nordnetservice/test/resources/html/yar.html"
     r.set(redis_key, redis_val)

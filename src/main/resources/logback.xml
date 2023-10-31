@@ -13,11 +13,11 @@
 
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
 
-      <fileNamePattern>/app/logs/nordnetservice-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-
       <!--
-      <fileNamePattern>logs/nordnetservice-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <fileNamePattern>/app/logs/nordnetservice-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
       -->
+
+      <fileNamePattern>logs/nordnetservice-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
       <maxFileSize>3 MB</maxFileSize>
     </rollingPolicy>
 

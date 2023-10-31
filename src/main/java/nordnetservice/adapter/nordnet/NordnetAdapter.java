@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import nordnetservice.adapter.RedisAdapter;
 import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.repository.NordnetRepository;
+import nordnetservice.domain.stock.OpeningPrice;
 import nordnetservice.dto.Tuple2;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
@@ -129,11 +130,11 @@ public class NordnetAdapter implements NordnetRepository  {
         return Stream.concat(calls.stream(), puts.stream()).toList();
     }
 
-    private StockPrice parseStockPrice(StockTicker ticker, Element el) {
+    private StockPrice parseStockPrice(StockTicker ticker, Element el, boolean fetchOpeningPrice) {
         var rows = el.children();
         var stockPriceRow = rows.get(1);
         var rc = stockPriceRow.children();
-        var opn = redisAdapter.openingPrice(ticker);
+        var opn = fetchOpeningPrice ? redisAdapter.openingPrice(ticker) : 0;
         var hi = el2double(rc.get(SP_HI));
         var lo = el2double(rc.get(SP_LO));
         var cls = el2double(rc.get(SP_CLS));
@@ -151,7 +152,7 @@ public class NordnetAdapter implements NordnetRepository  {
     private Tuple2<StockPrice,List<StockOption>> parse(StockTicker ticker, PageInfo page) {
         var soup = Jsoup.parse(page.body());
         var roleTable = soup.select("[role=table]");
-        var sp = parseStockPrice(ticker, roleTable.get(0));
+        var sp = parseStockPrice(ticker, roleTable.get(0), true);
         var options = parseOptions(sp, roleTable.get(1));
         return new Tuple2<>(sp, options);
     }
@@ -275,6 +276,15 @@ public class NordnetAdapter implements NordnetRepository  {
         return Optional.of(hit);
 
          */
+    }
+
+    @Override
+    public OpeningPrice openingPrice(StockTicker ticker) {
+        var page = downloader.downloadOne(ticker);
+        var soup = Jsoup.parse(page.body());
+        var roleTable = soup.select("[role=table]");
+        var sp = parseStockPrice(ticker, roleTable.get(0), false);
+        return new OpeningPrice(ticker, sp.cls());
     }
 
     private record ParsePageClosure(StockPrice stockPrice,

@@ -1,5 +1,6 @@
 package nordnetservice.domain.repository;
 
+import nordnetservice.domain.stock.OpeningPrice;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;
@@ -13,4 +14,5 @@ public interface NordnetRepository {
     List<StockOption> getPuts(StockTicker ticker);
     StockPrice getStockPrice(StockTicker ticker);
     Tuple2<StockPrice,StockOption> findOption(StockOptionTicker ticker);
+    OpeningPrice openingPrice(StockTicker ticker);
 }

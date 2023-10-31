@@ -60,6 +60,12 @@ class NordnetAdapterTest {
         checkStockOption(option2.second(),367.25, 373.25, 780, 0.75, 0.83, true);
     }
 
+    @Test
+    void test_opening_price() {
+        var price = nordnetAdapter.openingPrice(stockTicker);
+        assertEquals(409.9, price.price(), 0.1);
+    }
+
     private void checkStockPrice(StockPrice stockPrice) {
         assertEquals(403.0, stockPrice.opn(), 0.1);
         assertEquals(409.9, stockPrice.hi(), 0.1);

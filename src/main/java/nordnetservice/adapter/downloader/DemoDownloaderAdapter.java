@@ -72,15 +72,22 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
 
     @Override
     public PageInfo download(StockOptionTicker ticker) {
-        try {
-            //var url = NordnetUtil.urlFor(ticker);
+        return downloadOne();
+    }
 
+    private PageInfo downloadOne() {
+        try {
             var page = client.getPage(testUrl);
             var content = page.getWebResponse().getContentAsString();
             return new PageInfo(content);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public PageInfo downloadOne(StockTicker ticker) {
+        return downloadOne();
     }
 
 }
