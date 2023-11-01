@@ -68,6 +68,9 @@ def expiry(db):
         ]
     elif db == REDIS_INTEGRATION:
         result = [
+            1672527600000,
+            1704841200000,
+            1706742000000,
             1718920800000,
         ]
     else:
@@ -109,9 +112,9 @@ def populate_expiry(db, r):
 
 def populate_opening_prices(r):
     redis_key = "openingprices"
-    r.hset(redis_key, "EQNR", "180.00")
-    r.hset(redis_key, "NHY", "66.74")
-    r.hset(redis_key, "YAR", "403.00")
+    r.hset(redis_key, "2", "180.00")    # EQNR
+    r.hset(redis_key, "1", "66.74")     # NHY
+    r.hset(redis_key, "3", "403.00")    # YAR
 
     # 127.0.0.1:6379[5]> hgetall openingprices
     # "EQNR" "180.00"
@@ -155,7 +158,7 @@ if __name__ == '__main__':
     #parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
     
     parser.add_argument('--db', dest='db', metavar='DB', type=int,
-                        default=4, help='Redis db: prod = 0, demo = 4, test = 5, real time = 6. Default: 4 (demo)')
+                        default=4, help='Redis db: prod = 0, demo = 4, test = 5, integration test = 6. Default: 4 (demo)')
 
     parser.add_argument('--flushall', dest='flush_all', action='store_true',
                         default=False, help='Flush Redis cache before populate. default: false')

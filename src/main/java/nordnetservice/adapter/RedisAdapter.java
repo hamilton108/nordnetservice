@@ -20,7 +20,8 @@ public class RedisAdapter {
     }
 
     public double openingPrice(StockTicker ticker) {
-        var result = (String)redisTemplate.opsForHash().get("openingprices", ticker.ticker());
+        var result = (String)redisTemplate.opsForHash().get("openingprices",
+                String.format("%d",ticker.oid()));
         return Double.parseDouble(result);
     }
 

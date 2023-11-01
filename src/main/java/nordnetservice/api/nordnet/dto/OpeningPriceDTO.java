@@ -10,9 +10,16 @@ public class OpeningPriceDTO {
         this.price = price;
     }
 
+    /*
     @JsonGetter("stockticker")
     String getTicker() {
         return price.ticker().ticker();
+    }
+     */
+
+    @JsonGetter("oid")
+    int getOid() {
+        return price.ticker().oid();
     }
 
     @JsonGetter("price")

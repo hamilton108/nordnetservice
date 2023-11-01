@@ -4,11 +4,13 @@ package nordnetservice.critter.mybatis;
 import nordnetservice.critter.stockoption.StockOptionPurchase;
 import nordnetservice.critter.stockoption.StockOptionSale;
 import nordnetservice.critter.critterrule.*;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 
+@Mapper
 public interface CritterMapper {
     void toggleAcceptRule(@Param("oid") int oid, @Param("isActive") String isActive);
     void toggleDenyRule(@Param("oid") int oid, @Param("isActive") String isActive);
