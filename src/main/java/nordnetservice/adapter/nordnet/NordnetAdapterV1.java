@@ -32,10 +32,10 @@ import java.util.stream.Stream;
 
 
 @Component("v1")
-public class NordnetAdapter implements NordnetRepository  {
-    private static final int SP_CLS = 4;
-    private static final int SP_HI = 7;
-    private static final int SP_LO = 8;
+public class NordnetAdapterV1 extends NordnetAdapterBase implements NordnetRepository {
+    protected int SP_CLS = 4;
+    protected int SP_HI = 7;
+    protected int SP_LO = 8;
     private static final int CALL_TICKER = 1;
     private static final int CALL_BID = 3;
     private static final int CALL_ASK = 4;
@@ -44,7 +44,6 @@ public class NordnetAdapter implements NordnetRepository  {
     private static final int PUT_ASK = 10;
     private static final int PUT_TICKER = 13;
     private final Pattern pat = Pattern.compile("Norway\\s*(\\S*)");
-    private final Downloader<PageInfo> downloader;
     private final RedisAdapter redisAdapter;
     private final LocalDate curDate;
     private final OptionCalculator blackScholes;
@@ -52,29 +51,34 @@ public class NordnetAdapter implements NordnetRepository  {
     private final Cache<Integer, Tuple2<StockPrice,List<StockOption>>> cacheStockOptions;
     private final Cache<String, Tuple2<StockPrice,List<StockOption>>> cacheStockOption;
 
-    public NordnetAdapter(Downloader<PageInfo> downloaderAdapter,
-                          RedisAdapter redisAdapter,
-                          @Qualifier("blackScholes") OptionCalculator blackScholes,
-                          @Qualifier("binomialTree") OptionCalculator binomialTree,
-                          @Value("${curdate}") String curDateStr,
-                          @Value("${cache.options.expiry}") int optionsExpiry,
-                          @Value("${cache.option.expiry}") int optionExpiry) {
-        this.downloader = downloaderAdapter;
+    public NordnetAdapterV1(Downloader<PageInfo> downloaderAdapter,
+                            RedisAdapter redisAdapter,
+                            @Qualifier("blackScholes") OptionCalculator blackScholes,
+                            @Qualifier("binomialTree") OptionCalculator binomialTree,
+                            @Value("${curdate:#{null}}") String curDateStr,
+                            @Value("${curdate.v1:#{null}}") String curDateTest,
+                            @Value("${cache.options.expiry}") int optionsExpiry,
+                            @Value("${cache.option.expiry}") int optionExpiry) {
+        super(downloaderAdapter);
         this.redisAdapter = redisAdapter;
         this.blackScholes = blackScholes;
         this.binomialTree = binomialTree;
+        /*
         if (curDateStr == null || curDateStr.equals("today")) {
             curDate = LocalDate.now();
         }
         else {
             curDate = LocalDate.parse(curDateStr);
         }
+         */
+        curDate = getDateFor(curDateStr,curDateTest);
+
         cacheStockOptions = Caffeine.newBuilder().expireAfterWrite(optionsExpiry, TimeUnit.MINUTES).build();
         cacheStockOption = Caffeine.newBuilder().expireAfterWrite(optionExpiry, TimeUnit.SECONDS).build();
     }
 
     private String elementText(Element el) {
-        return el.children().get(0).text();
+        return el.children().getFirst().text();
     }
     private StockOptionTicker el2ticker(Element el) {
         var m = pat.matcher(elementText(el));
@@ -168,11 +172,11 @@ public class NordnetAdapter implements NordnetRepository  {
         var hit = cacheStockOptions.getIfPresent(ticker.oid());
 
         if (hit == null) {
-            var pages = downloader.download(ticker);
-            if (pages.size() == 0) {
+            var pages = getDownloader().download(ticker);
+            if (pages.isEmpty()) {
                 return new Tuple2<>(null, Collections.emptyList());
             }
-            var page = pages.get(0);
+            var page = pages.getFirst();
 
             var result0 = parse(ticker, page);
 
@@ -238,7 +242,7 @@ public class NordnetAdapter implements NordnetRepository  {
 
         if (hit == null) {
 
-            var page = downloader.download(ticker);
+            var page = getDownloader().download(ticker);
 
             Tuple2<StockPrice, List<StockOption>> options = parse(info.getStockTicker(), page);
 
@@ -280,15 +284,21 @@ public class NordnetAdapter implements NordnetRepository  {
 
     @Override
     public OpeningPrice openingPrice(StockTicker ticker) {
-        var page = downloader.downloadOne(ticker);
+        var page = getDownloader().downloadOne(ticker);
         var soup = Jsoup.parse(page.body());
         var roleTable = soup.select("[role=table]");
-        var sp = parseStockPrice(ticker, roleTable.get(0), false);
+        var sp = parseStockPrice(ticker, roleTable.getFirst(), false);
         return new OpeningPrice(ticker, sp.cls());
     }
 
+    @Override
+    public void resetCaffeine() {
+        cacheStockOption.invalidateAll();
+        cacheStockOptions.invalidateAll();
+    }
+
     private record ParsePageClosure(StockPrice stockPrice,
-                                    NordnetAdapter adapter) implements Function<PageInfo, List<StockOption>> {
+                                    NordnetAdapterV1 adapter) implements Function<PageInfo, List<StockOption>> {
         @Override
         public List<StockOption> apply(PageInfo page) {
             return adapter.parsePage(stockPrice, page);
@@ -297,7 +307,7 @@ public class NordnetAdapter implements NordnetRepository  {
 
     private record StockOptionCreator(StockOptionType ot,
                                       StockPrice stockPrice,
-                                      NordnetAdapter adapter) implements Function<Element, StockOption> {
+                                      NordnetAdapterV1 adapter) implements Function<Element, StockOption> {
         @Override
             public StockOption apply(Element element) {
                 if (ot == StockOptionType.CALL) {

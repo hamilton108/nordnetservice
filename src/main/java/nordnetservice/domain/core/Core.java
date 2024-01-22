@@ -11,6 +11,9 @@ import nordnetservice.domain.stockoption.PurchaseType;
 import nordnetservice.domain.stockoption.StockOption;
 import nordnetservice.domain.stockoption.StockOptionTicker;
 import nordnetservice.dto.Tuple2;
+import nordnetservice.dto.YearMonthDTO;
+import nordnetservice.util.NordnetUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,7 +24,7 @@ public class Core {
     private final CritterAdapter critterAdapter;
     private final RedisAdapter redisAdapter;
 
-    public Core(NordnetRepository nordnetRepository,
+    public Core(@Qualifier("v2") NordnetRepository nordnetRepository,
                 CritterAdapter critterAdapter,
                 RedisAdapter redisAdapter) {
         this.nordnetRepository = nordnetRepository;
@@ -49,5 +52,14 @@ public class Core {
     }
     public OpeningPrice openingPrice(StockTicker ticker) {
         return nordnetRepository.openingPrice(ticker);
+    }
+
+    public void thirdFridayMillis(List<YearMonthDTO> items) {
+        var millis = items.stream().map(NordnetUtil::calcUnixTimeForThirdFriday).toList();
+        redisAdapter.updateNordnetMillis(millis);
+    }
+
+    public void resetCaffeine() {
+        nordnetRepository.resetCaffeine();
     }
 }

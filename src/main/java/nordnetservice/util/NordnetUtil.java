@@ -2,11 +2,28 @@ package nordnetservice.util;
 
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOptionTicker;
+import nordnetservice.dto.YearMonthDTO;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 public class NordnetUtil {
+
+    private final static ZoneId zoneId = ZoneId.of("Europe/Oslo");
+
+    public static long calcUnixTimeForThirdFriday(YearMonthDTO yearMonth) {
+        var thirdFriday = StockOptionUtil.thirdFriday(yearMonth.year(), yearMonth.month());
+
+        var ldt = LocalDateTime.of(thirdFriday.getYear(), thirdFriday.getMonth(), thirdFriday.getDayOfMonth(), 0, 0, 0);
+
+        var offset = zoneId.getRules().getOffset(ldt);
+
+        return ldt.toInstant(offset).toEpochMilli();
+    }
 
     public static URL urlFor(StockOptionTicker ticker ) {
         try {

@@ -1,16 +1,21 @@
 #!/bin/bash
 
-NORDNET="rcs/nordnetservice:1.0.0"
+NORDNET="rcs/nordnetservice:1.3.0"
 ROOT="1"
 NETWORK="pgutil_lofsrud"
+IP="172.20.1.5"
 
 # docker run -it --rm --network $NETWORK --ip 172.20.1.9 -v $opt:$opt -w $WD $JAVA_VER /bin/sh
 #
 
+PROFILE="$1"
+
+printf "PROFILE: $PROFILE, ${PWD}\n"
+
 if [ "$ROOT" = "1" ]; then
-  docker run --rm --network $NETWORK $NORDNET
+  docker run --rm -v ${PWD}:/app/html -e "SPRING_PROFILES_ACTIVE=$PROFILE" --network $NETWORK --ip "$IP" $NORDNET
 else
-  docker run --network $NETWORK --user $(id -u):$(id -g) --rm $NORDNET
+  docker run --rm -v ${PWD}:/app/html -e "SPRING_PROFILES_ACTIVE=$PROFILE"--network $NETWORK --ip "$IP" --user $(id -u):$(id -g) $NORDNET
 fi
 
 exit 0

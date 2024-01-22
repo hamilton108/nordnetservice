@@ -1,8 +1,6 @@
 package nordnetservice.api.nordnet.response;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import nordnetservice.domain.stock.StockPrice;
-import nordnetservice.domain.stockoption.StockOption;
 
 import java.util.List;
 

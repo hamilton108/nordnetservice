@@ -41,5 +41,11 @@ public class RedisAdapter {
     public String fetchValue(String key) {
         return (String)redisTemplate.opsForValue().get(key);
     }
+
+    public void updateNordnetMillis(List<Long> millis) {
+        var items = millis.stream().map(Object::toString).toArray();
+        redisTemplate.opsForSet().add("expiry", items);
+    }
+
 }
 
