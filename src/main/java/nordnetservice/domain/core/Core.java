@@ -11,8 +11,11 @@ import nordnetservice.domain.stockoption.PurchaseType;
 import nordnetservice.domain.stockoption.StockOption;
 import nordnetservice.domain.stockoption.StockOptionTicker;
 import nordnetservice.dto.Tuple2;
+import nordnetservice.dto.YearMonthDTO;
+import nordnetservice.util.NordnetUtil;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -49,5 +52,9 @@ public class Core {
     }
     public OpeningPrice openingPrice(StockTicker ticker) {
         return nordnetRepository.openingPrice(ticker);
+    }
+
+    public List<Long> thirdFridayMillis(List<YearMonthDTO> items) {
+        return items.stream().map(NordnetUtil::calcUnixTimeForThirdFriday).toList();
     }
 }
