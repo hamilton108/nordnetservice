@@ -13,8 +13,8 @@ plugins {
 }
 
 group = 'hamilton108'
-version = '1.0.0'
-sourceCompatibility = '17'
+version = '1.1.0'
+sourceCompatibility = '21'
 
 repositories {
 	mavenCentral()

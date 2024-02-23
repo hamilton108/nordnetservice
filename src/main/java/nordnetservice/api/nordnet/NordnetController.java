@@ -1,23 +1,22 @@
 package nordnetservice.api.nordnet;
 
-import jakarta.servlet.http.HttpServletResponse;
 import nordnetservice.api.nordnet.dto.OpeningPriceDTO;
 import nordnetservice.api.nordnet.response.CallsResponse;
 import nordnetservice.api.nordnet.response.StockOptionDTO;
 import nordnetservice.api.nordnet.response.StockPriceDTO;
+import nordnetservice.api.response.DefaultResponse;
+import nordnetservice.api.response.AppStatusCode;
 import nordnetservice.domain.core.Core;
 import nordnetservice.domain.stock.OpeningPrice;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;
 import nordnetservice.dto.YearMonthDTO;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -57,17 +56,20 @@ public class NordnetController {
     }
 
     @PostMapping(value = "/thirdfriday/nordnetmillis", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Long>> thirdFridayNordnetMillis(@RequestBody List<YearMonthDTO> items) {
-        return ResponseEntity.ok(core.thirdFridayMillis(items));
+    public ResponseEntity<DefaultResponse> thirdFridayNordnetMillis(@RequestBody List<YearMonthDTO> items) {
+        core.thirdFridayMillis(items);
+        return ResponseEntity.ok(new DefaultResponse(AppStatusCode.Ok, "ok"));
     }
 
+    /*
     @PostMapping(value = "/thirdfriday/demo", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public void thirdFridayDemo(@RequestBody List<YearMonthDTO> items, HttpServletResponse response) {
         System.out.println(response);
-        response.setStatus(HttpStatus.NO_CONTENT.value());
+        //response.setStatus(HttpStatus.NO_CONTENT.value());
         System.out.println(items);
     }
+     */
 
     private CallsResponse getOptions(int oid, Function<StockTicker,List<StockOption>> fn) {
         var ticker = new StockTicker(oid);

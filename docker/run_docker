@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NORDNET="rcs/nordnetservice:1.0.0"
+NORDNET="rcs/nordnetservice:1.1.0"
 ROOT="1"
 NETWORK="pgutil_lofsrud"
 

@@ -54,7 +54,8 @@ public class Core {
         return nordnetRepository.openingPrice(ticker);
     }
 
-    public List<Long> thirdFridayMillis(List<YearMonthDTO> items) {
-        return items.stream().map(NordnetUtil::calcUnixTimeForThirdFriday).toList();
+    public void thirdFridayMillis(List<YearMonthDTO> items) {
+        var millis = items.stream().map(NordnetUtil::calcUnixTimeForThirdFriday).toList();
+        redisAdapter.updateNordnetMillis(millis);
     }
 }

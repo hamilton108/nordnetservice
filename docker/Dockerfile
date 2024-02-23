@@ -1,4 +1,5 @@
-FROM eclipse-temurin:17-jre-alpine
+FROM bellsoft/liberica-runtime-container:jre-21-cds-slim-glibc
+# FROM eclipse-temurin:17-jre-alpine
 
 # ARG VERSION
 
@@ -10,11 +11,11 @@ RUN mkdir /app/logs
 
 COPY ./yar.html /app/html
 
-COPY ./nordnetservice-1.0.0.jar /app
+COPY ./nordnetservice-1.1.0.jar /app
 
 # ENV VERSION=${VERSION}
 
-ENTRYPOINT ["java", "-jar", "/app/nordnetservice-1.0.0.jar"]
+ENTRYPOINT ["java", "-jar", "/app/nordnetservice-1.1.0.jar"]
 
 
 #FROM maven:3.6.3-jdk-11-slim@sha256:68ce1cd457891f48d1e137c7d6a4493f60843e84c9e2634e3df1d3d5b381d36c AS build
