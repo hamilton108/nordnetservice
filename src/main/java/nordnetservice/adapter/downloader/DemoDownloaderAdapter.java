@@ -20,21 +20,67 @@ public class DemoDownloaderAdapter implements Downloader<PageInfo> {
     private final WebClient client;
     private final String testUrl;
     private final String testUrl2;
+    private final String testUrlV2;
+
+    public enum NordnetAdapterVersion { NOT_SET, VER_1, VER_2 };
+
+    private NordnetAdapterVersion nordnetAdapterVersion = NordnetAdapterVersion.NOT_SET;
+
+    public NordnetAdapterVersion getNordnetAdapterVersion() {
+        return nordnetAdapterVersion;
+    }
+
+    public void setNordnetAdapterVersion(NordnetAdapterVersion nordnetAdapterVersion) {
+        this.nordnetAdapterVersion = nordnetAdapterVersion;
+    }
 
     public DemoDownloaderAdapter(@Value("${url.test}") String testUrl,
-                                 @Value("${url.test.2:#{null}}") String testUrl2) {
+                                 @Value("${url.test.2:#{null}}") String testUrl2,
+                                 @Value("${url.test.v2:#{null}}") String testUrlV2) {
         System.out.println(testUrl);
         System.out.println(testUrl2);
+        System.out.println(testUrlV2);
         this.testUrl = testUrl;
         this.testUrl2 = testUrl2;
+        this.testUrlV2 = testUrlV2;
 
         this.client = new WebClient();
         this.client.getOptions().setJavaScriptEnabled(false);
     }
 
     private List<PageInfo> result = null;
+
     @Override
     public List<PageInfo> download(StockTicker ticker) {
+        if (nordnetAdapterVersion == NordnetAdapterVersion.NOT_SET) {
+            throw new RuntimeException("Adapter version not set");
+        }
+        if (nordnetAdapterVersion == NordnetAdapterVersion.VER_1) {
+            return downloadV1(ticker);
+        }
+        else if (nordnetAdapterVersion == NordnetAdapterVersion.VER_2) {
+            return downloadV2(ticker);
+        }
+        else {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<PageInfo> downloadV2(StockTicker ticker) {
+        if (result == null) {
+            try {
+                var page = client.getPage(testUrlV2);
+                var content = page.getWebResponse().getContentAsString();
+                var info = new PageInfo(content);
+                result = Collections.singletonList(info);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return result;
+    }
+
+    private List<PageInfo> downloadV1(StockTicker ticker) {
         if (result == null) {
 
             try {

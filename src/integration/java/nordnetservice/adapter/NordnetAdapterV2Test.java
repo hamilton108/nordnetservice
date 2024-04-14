@@ -1,29 +1,44 @@
 package nordnetservice.adapter;
 
-import nordnetservice.adapter.nordnet.NordnetAdapter;
+import nordnetservice.adapter.downloader.DemoDownloaderAdapter;
+import nordnetservice.adapter.nordnet.NordnetAdapterV2;
 import nordnetservice.domain.stock.StockPrice;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;
 import nordnetservice.domain.stockoption.StockOptionTicker;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-//import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 //@ActiveProfiles("integration")
-
 @SpringBootTest
-class NordnetAdapterTest {
+class NordnetAdapterV2Test {
+
 
     private final StockTicker stockTicker = new StockTicker("YAR");
 
     @Autowired
-    NordnetAdapter nordnetAdapter;
+    @Qualifier("v2")
+    NordnetAdapterV2 nordnetAdapter;
 
+    void setAdapterVersion() {
+        var dl = nordnetAdapter.getDownloader();
+        if (dl instanceof DemoDownloaderAdapter) {
+            ((DemoDownloaderAdapter)dl)
+                    .setNordnetAdapterVersion(DemoDownloaderAdapter.NordnetAdapterVersion.VER_2);
+        }
+    }
+
+    @BeforeEach
+    void init() {
+        setAdapterVersion();
+    }
 
     @Test
     void test_parse() {

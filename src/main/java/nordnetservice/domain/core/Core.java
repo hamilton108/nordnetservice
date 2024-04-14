@@ -13,27 +13,30 @@ import nordnetservice.domain.stockoption.StockOptionTicker;
 import nordnetservice.dto.Tuple2;
 import nordnetservice.dto.YearMonthDTO;
 import nordnetservice.util.NordnetUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class Core {
-    private final NordnetRepository nordnetRepository;
+    private final NordnetRepository nordnetRepositoryV1;
+    private final NordnetRepository nordnetRepositoryV2;
     private final CritterAdapter critterAdapter;
     private final RedisAdapter redisAdapter;
 
-    public Core(NordnetRepository nordnetRepository,
+    public Core(@Qualifier("v1") NordnetRepository nordnetRepositoryV1,
+                @Qualifier("v2") NordnetRepository nordnetRepositoryV2,
                 CritterAdapter critterAdapter,
                 RedisAdapter redisAdapter) {
-        this.nordnetRepository = nordnetRepository;
+        this.nordnetRepositoryV1 = nordnetRepositoryV1;
+        this.nordnetRepositoryV2 = nordnetRepositoryV2;
         this.critterAdapter = critterAdapter;
         this.redisAdapter = redisAdapter;
     }
 
     public Tuple2<StockPrice, StockOption> findOption(StockOptionTicker ticker) {
-        return nordnetRepository.findOption(ticker);
+        return nordnetRepositoryV1.findOption(ticker);
     }
 
     public List<StockOptionPurchase> fetchCritters(PurchaseType purchaseType) {
@@ -41,17 +44,17 @@ public class Core {
     }
 
     public List<StockOption> getCalls(StockTicker ticker) {
-        return nordnetRepository.getCalls(ticker);
+        return nordnetRepositoryV1.getCalls(ticker);
     }
 
     public List<StockOption> getPuts(StockTicker ticker) {
-        return nordnetRepository.getPuts(ticker);
+        return nordnetRepositoryV1.getPuts(ticker);
     }
     public StockPrice getStockPrice(StockTicker ticker) {
-        return nordnetRepository.getStockPrice(ticker);
+        return nordnetRepositoryV1.getStockPrice(ticker);
     }
     public OpeningPrice openingPrice(StockTicker ticker) {
-        return nordnetRepository.openingPrice(ticker);
+        return nordnetRepositoryV1.openingPrice(ticker);
     }
 
     public void thirdFridayMillis(List<YearMonthDTO> items) {

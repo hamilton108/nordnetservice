@@ -1,7 +1,7 @@
 package nordnetservice.adapter;
 
 import nordnetservice.adapter.downloader.DefaultDownloaderAdapter;
-import nordnetservice.adapter.nordnet.NordnetAdapter;
+import nordnetservice.adapter.nordnet.NordnetAdapterV1;
 import nordnetservice.domain.downloader.Downloader;
 import nordnetservice.domain.html.PageInfo;
 import nordnetservice.domain.stock.StockPrice;
@@ -30,7 +30,7 @@ public class NordnetAdapterRealTimeTest {
 
     Downloader<PageInfo> downloader;
 
-    NordnetAdapter nordnetAdapter;
+    NordnetAdapterV1 nordnetAdapter;
 
     @BeforeEach
     void init() {
@@ -39,7 +39,7 @@ public class NordnetAdapterRealTimeTest {
         OptionCalculator binomialTree = new BinomialTreeCalculator();
 
         nordnetAdapter =
-                new NordnetAdapter(downloader,
+                new NordnetAdapterV1(downloader,
                         redisAdapter,
                         blackScholes,
                         binomialTree,
