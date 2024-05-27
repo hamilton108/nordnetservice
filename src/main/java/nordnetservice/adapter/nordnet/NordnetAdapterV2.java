@@ -14,10 +14,11 @@ public class NordnetAdapterV2 extends NordnetAdapterV1 {
                             RedisAdapter redisAdapter,
                             @Qualifier("blackScholes") OptionCalculator blackScholes,
                             @Qualifier("binomialTree") OptionCalculator binomialTree,
-                            @Value("${curdate}") String curDateStr,
+                            @Value("${curdate:#{null}}") String curDateStr,
+                            @Value("${curdate.v2:#{null}}") String curDateTest,
                             @Value("${cache.options.expiry}") int optionsExpiry,
                             @Value("${cache.option.expiry}") int optionExpiry) {
-        super(downloaderAdapter, redisAdapter, blackScholes, binomialTree, curDateStr, optionsExpiry, optionExpiry);
+        super(downloaderAdapter, redisAdapter, blackScholes, binomialTree, curDateStr, curDateTest, optionsExpiry, optionExpiry);
         SP_CLS = 3;
         SP_HI = 6;
         SP_LO = 7;

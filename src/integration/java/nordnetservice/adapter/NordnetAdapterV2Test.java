@@ -45,18 +45,19 @@ class NordnetAdapterV2Test {
         var stockPrice = nordnetAdapter.getStockPrice(stockTicker);
         checkStockPrice(stockPrice);
         var calls = nordnetAdapter.getCalls(stockTicker);
-        assertEquals(42, calls.size());
+        assertEquals(37, calls.size());
         var puts = nordnetAdapter.getPuts(stockTicker);
-        assertEquals(42, puts.size());
-        checkStockOption("YAR4C540", 0.55, 1.6, 540, calls);
-        checkStockOption("YAR4C500", 2.2, 4.6, 500, calls);
-        checkStockOption("YAR4C340", 77.75, 83.25, 340, calls);
-        checkStockOption("YAR4I360", 0.0, 0.0, 360, calls);
+        assertEquals(37, puts.size());
 
-        checkStockOption("YAR4O780", 367.25, 373.25, 780, puts);
-        checkStockOption("YAR4O520", 107.5, 113.5, 520, puts);
-        checkStockOption("YAR4O320", 1.25, 2.05, 320, puts);
-        checkStockOption("YAR4U440", 0.0, 0.0, 440, puts);
+        checkStockOption("YAR4F390", 0.95, 2.10, 390, calls);
+        checkStockOption("YAR4F340", 14.25, 16.00, 340, calls);
+        checkStockOption("YAR4F310", 34.50, 38.75, 310, calls);
+        checkStockOption("YAR4F220", 115.50, 130.50, 220, calls);
+
+        checkStockOption("YAR4R390", 49.25, 55.00, 390, puts);
+        checkStockOption("YAR4R340", 14.00, 15.50, 340, puts);
+        checkStockOption("YAR4R310", 4.30, 5.70, 310, puts);
+        checkStockOption("YAR4R220", 0.01, 1.40, 220, puts);
     }
 
     @Test
@@ -83,9 +84,9 @@ class NordnetAdapterV2Test {
 
     private void checkStockPrice(StockPrice stockPrice) {
         assertEquals(403.0, stockPrice.opn(), 0.1);
-        assertEquals(409.9, stockPrice.hi(), 0.1);
-        assertEquals(402.3, stockPrice.lo(), 0.1);
-        assertEquals(409.9, stockPrice.cls(), 0.1);
+        assertEquals(343.1, stockPrice.hi(), 0.1);
+        assertEquals(327.4, stockPrice.lo(), 0.1);
+        assertEquals(341.9, stockPrice.cls(), 0.1);
     }
 
     private void checkStockOption(StockOption option,

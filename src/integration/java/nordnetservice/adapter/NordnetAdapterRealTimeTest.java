@@ -44,6 +44,7 @@ public class NordnetAdapterRealTimeTest {
                         blackScholes,
                         binomialTree,
                         "today",
+                        null,
                         30,
                         600);
 

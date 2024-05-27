@@ -55,19 +55,24 @@ public class NordnetAdapterV1 extends NordnetAdapterBase implements NordnetRepos
                             RedisAdapter redisAdapter,
                             @Qualifier("blackScholes") OptionCalculator blackScholes,
                             @Qualifier("binomialTree") OptionCalculator binomialTree,
-                            @Value("${curdate}") String curDateStr,
+                            @Value("${curdate:#{null}}") String curDateStr,
+                            @Value("${curdate.v1:#{null}}") String curDateTest,
                             @Value("${cache.options.expiry}") int optionsExpiry,
                             @Value("${cache.option.expiry}") int optionExpiry) {
         super(downloaderAdapter);
         this.redisAdapter = redisAdapter;
         this.blackScholes = blackScholes;
         this.binomialTree = binomialTree;
+        /*
         if (curDateStr == null || curDateStr.equals("today")) {
             curDate = LocalDate.now();
         }
         else {
             curDate = LocalDate.parse(curDateStr);
         }
+         */
+        curDate = getDateFor(curDateStr,curDateTest);
+
         cacheStockOptions = Caffeine.newBuilder().expireAfterWrite(optionsExpiry, TimeUnit.MINUTES).build();
         cacheStockOption = Caffeine.newBuilder().expireAfterWrite(optionExpiry, TimeUnit.SECONDS).build();
     }
