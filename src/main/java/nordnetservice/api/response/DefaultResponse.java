@@ -2,6 +2,6 @@ package nordnetservice.api.response;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
-public record DefaultResponse(@JsonGetter("statuscode") AppStatusCode statusCode,
+public record DefaultResponse(@JsonGetter("appStatusCode") AppStatusCode appStatusCode,
                               @JsonGetter("msg") String msg) {
 }

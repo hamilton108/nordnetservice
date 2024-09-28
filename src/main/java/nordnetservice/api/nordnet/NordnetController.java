@@ -6,21 +6,23 @@ import nordnetservice.api.nordnet.response.StockOptionDTO;
 import nordnetservice.api.nordnet.response.StockPriceDTO;
 import nordnetservice.api.response.DefaultResponse;
 import nordnetservice.api.response.AppStatusCode;
+import nordnetservice.api.response.PayloadResponse;
+import nordnetservice.api.util.ApiUtil;
 import nordnetservice.domain.core.Core;
-import nordnetservice.domain.stock.OpeningPrice;
-import nordnetservice.domain.stock.StockPrice;
+import nordnetservice.domain.functional.Either;
 import nordnetservice.domain.stock.StockTicker;
 import nordnetservice.domain.stockoption.StockOption;
 import nordnetservice.dto.YearMonthDTO;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.function.Function;
 
 
+@CrossOrigin(origins = "http://localhost:8080")
 @Controller
 @RequestMapping("/nordnet")
 public class NordnetController {
@@ -32,39 +34,48 @@ public class NordnetController {
     }
 
     @GetMapping(value = "/openingprice/{oid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<OpeningPriceDTO> openingPrice(@PathVariable("oid") int oid) {
+    public ResponseEntity<PayloadResponse<OpeningPriceDTO>> openingPrice(@PathVariable("oid") int oid) {
         var ticker = new StockTicker(oid);
-        OpeningPrice price = core.openingPrice(ticker);
-        return ResponseEntity.ok(new OpeningPriceDTO(price));
+        var price = core.openingPrice(ticker);
+        return ApiUtil.mapWithFn(price, OpeningPriceDTO::new);
     }
 
     @GetMapping(value = "/spot/{oid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<StockPriceDTO> spot(@PathVariable("oid") int oid) {
+    public ResponseEntity<PayloadResponse<StockPriceDTO>> spot(@PathVariable("oid") int oid) {
         var ticker = new StockTicker(oid);
-        StockPrice price = core.getStockPrice(ticker);
-        return ResponseEntity.ok(new StockPriceDTO(price));
+        var price = core.getStockPrice(ticker);
+        return ApiUtil.mapWithFn(price, StockPriceDTO::new);
     }
 
     @GetMapping(value = "/calls/{oid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CallsResponse> calls(@PathVariable("oid") int oid) {
-        return ResponseEntity.ok(getOptions(oid, core::getCalls));
+    public ResponseEntity<PayloadResponse<CallsResponse>> calls(@PathVariable("oid") int oid) {
+        var ticker = new StockTicker(oid);
+        var result= core.getStockPrice(ticker).andThen(stockPrice ->
+            core.getCalls(ticker).andThen(opx -> {
+                return Either.right(new CallsResponse(new StockPriceDTO(stockPrice), map(opx)));
+        }));
+        return ApiUtil.map(result);
     }
 
     @GetMapping(value = "/puts/{oid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CallsResponse> puts(@PathVariable("oid") int oid) {
-        return ResponseEntity.ok(getOptions(oid, core::getPuts));
+    public ResponseEntity<PayloadResponse<CallsResponse>> puts(@PathVariable("oid") int oid) {
+        var ticker = new StockTicker(oid);
+        var result= core.getStockPrice(ticker).andThen(stockPrice ->
+                core.getPuts(ticker).andThen(opx -> {
+                    return Either.right(new CallsResponse(new StockPriceDTO(stockPrice), map(opx)));
+                }));
+        return ApiUtil.map(result);
     }
 
     @PostMapping(value = "/thirdfriday/nordnetmillis", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<DefaultResponse> thirdFridayNordnetMillis(@RequestBody List<YearMonthDTO> items) {
-        core.thirdFridayMillis(items);
-        return ResponseEntity.ok(new DefaultResponse(AppStatusCode.Ok, "ok"));
+        return ApiUtil.mapWithErrFn(core.thirdFridayMillis(items), HttpStatus.OK, "thirdFriday NordnetMillis ok");
     }
 
     @GetMapping(value = "/caffeine/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<DefaultResponse> resetCaffeine() {
         core.resetCaffeine();
-        return ResponseEntity.ok(new DefaultResponse(AppStatusCode.Ok, "ok"));
+        return ResponseEntity.ok(new DefaultResponse(AppStatusCode.OK, "ok"));
     }
 
     /*
@@ -77,12 +88,7 @@ public class NordnetController {
     }
      */
 
-    private CallsResponse getOptions(int oid, Function<StockTicker,List<StockOption>> fn) {
-        var ticker = new StockTicker(oid);
-        var options = fn.apply(ticker);
-        StockPrice price = core.getStockPrice(ticker);
-        return new CallsResponse(new StockPriceDTO(price), map(options));
-    }
+
 
     private List<StockOptionDTO> map(List<StockOption> options) {
         return options.stream().map(StockOptionDTO::new).toList();
