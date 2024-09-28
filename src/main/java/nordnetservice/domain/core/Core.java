@@ -3,6 +3,9 @@ package nordnetservice.domain.core;
 import nordnetservice.adapter.CritterAdapter;
 import nordnetservice.adapter.RedisAdapter;
 import nordnetservice.critter.stockoption.StockOptionPurchase;
+import nordnetservice.domain.error.ApplicationError;
+import nordnetservice.domain.error.GeneralError;
+import nordnetservice.domain.functional.Either;
 import nordnetservice.domain.repository.NordnetRepository;
 import nordnetservice.domain.stock.OpeningPrice;
 import nordnetservice.domain.stock.StockPrice;
@@ -36,8 +39,13 @@ public class Core {
         return nordnetRepository.findOption(ticker);
     }
 
-    public List<StockOptionPurchase> fetchCritters(PurchaseType purchaseType) {
-        return critterAdapter.fetchCritters(purchaseType);
+    public Either<ApplicationError,List<StockOptionPurchase>> fetchCritters(PurchaseType purchaseType) {
+        try {
+            return Either.right(critterAdapter.fetchCritters(purchaseType));
+        }
+        catch (Exception ex) {
+            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
+        }
     }
 
     public List<StockOption> getCalls(StockTicker ticker) {
