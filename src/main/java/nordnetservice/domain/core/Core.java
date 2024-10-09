@@ -5,6 +5,7 @@ import nordnetservice.adapter.RedisAdapter;
 import nordnetservice.critter.stockoption.StockOptionPurchase;
 import nordnetservice.domain.error.ApplicationError;
 import nordnetservice.domain.error.GeneralError;
+import nordnetservice.domain.error.SqlError;
 import nordnetservice.domain.functional.Either;
 import nordnetservice.domain.repository.NordnetRepository;
 import nordnetservice.domain.stock.OpeningPrice;
@@ -16,10 +17,12 @@ import nordnetservice.domain.stockoption.StockOptionTicker;
 import nordnetservice.dto.Tuple2;
 import nordnetservice.dto.YearMonthDTO;
 import nordnetservice.util.NordnetUtil;
+import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class Core {
@@ -39,32 +42,102 @@ public class Core {
         return nordnetRepository.findOption(ticker);
     }
 
-    public Either<ApplicationError,List<StockOptionPurchase>> fetchCritters(PurchaseType purchaseType) {
+    @FunctionalInterface
+    private interface HandleEitherCommand<T> {
+        T handle() throws Exception;
+    };
+    /*
+    @FunctionalInterface
+    private interface HandleOptionalCommand<T> {
+        T handle() throws Exception;
+    };
+     */
+
+    private <T> Either<ApplicationError,T> handle(HandleEitherCommand<T> fn) {
         try {
-            return Either.right(critterAdapter.fetchCritters(purchaseType));
+            return Either.right(fn.handle());
+        }
+        catch (MyBatisSystemException ex) {
+            if (ex.getMessage() == null) {
+                return Either.left(new SqlError.MybatisSqlError(ex.getCause().getMessage()));
+            }
+            else {
+                return Either.left(new SqlError.MybatisSqlError(ex.getMessage()));
+            }
         }
         catch (Exception ex) {
             return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
         }
     }
 
-    public List<StockOption> getCalls(StockTicker ticker) {
-        return nordnetRepository.getCalls(ticker);
+    public Either<ApplicationError,List<StockOptionPurchase>> fetchCritters(PurchaseType purchaseType) {
+        return handle(() -> critterAdapter.fetchCritters(purchaseType));
+        /*
+        try {
+            return Either.right(critterAdapter.fetchCritters(purchaseType));
+        }
+        catch (MyBatisSystemException ex) {
+            if (ex.getMessage() == null) {
+                return Either.left(new SqlError.MybatisSqlError(ex.getCause().getMessage()));
+            }
+            else {
+                return Either.left(new SqlError.MybatisSqlError(ex.getMessage()));
+            }
+        }
+        catch (Exception ex) {
+            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
+        }
+
+         */
+    }
+    public Either<ApplicationError,List<StockOption>> getCalls(StockTicker ticker) {
+        return handle(() -> nordnetRepository.getCalls(ticker));
+        /*
+        try {
+            return Either.right(nordnetRepository.getCalls(ticker));
+        }
+        catch (Exception ex) {
+            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
+        }
+
+         */
     }
 
-    public List<StockOption> getPuts(StockTicker ticker) {
-        return nordnetRepository.getPuts(ticker);
+    public Either<ApplicationError,List<StockOption>> getPuts(StockTicker ticker) {
+        try {
+            return Either.right(nordnetRepository.getPuts(ticker));
+        }
+        catch (Exception ex) {
+            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
+        }
     }
-    public StockPrice getStockPrice(StockTicker ticker) {
-        return nordnetRepository.getStockPrice(ticker);
-    }
-    public OpeningPrice openingPrice(StockTicker ticker) {
-        return nordnetRepository.openingPrice(ticker);
+    public Either<ApplicationError,StockPrice> getStockPrice(StockTicker ticker) {
+        try {
+            return Either.right(nordnetRepository.getStockPrice(ticker));
+        }
+        catch (Exception ex) {
+            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
+        }
     }
 
-    public void thirdFridayMillis(List<YearMonthDTO> items) {
-        var millis = items.stream().map(NordnetUtil::calcUnixTimeForThirdFriday).toList();
-        redisAdapter.updateNordnetMillis(millis);
+    public Either<ApplicationError,OpeningPrice> openingPrice(StockTicker ticker) {
+        try {
+            return Either.right(nordnetRepository.openingPrice(ticker));
+        }
+        catch (Exception ex) {
+            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
+        }
+    }
+
+    public Optional<ApplicationError> thirdFridayMillis(List<YearMonthDTO> items) {
+        try {
+            var millis = items.stream().map(NordnetUtil::calcUnixTimeForThirdFriday).toList();
+            redisAdapter.updateNordnetMillis(millis);
+            return Optional.empty();
+        }
+        catch (Exception ex) {
+            return Optional.of(new GeneralError.GeneralApplicationError(ex.getMessage()));
+        }
     }
 
     public void resetCaffeine() {
