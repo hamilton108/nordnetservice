@@ -37,14 +37,14 @@ public class NordnetController {
     public ResponseEntity<PayloadResponse<OpeningPriceDTO>> openingPrice(@PathVariable("oid") int oid) {
         var ticker = new StockTicker(oid);
         var price = core.openingPrice(ticker);
-        return ApiUtil.mapWithErrFn(price, OpeningPriceDTO::new);
+        return ApiUtil.mapWithFn(price, OpeningPriceDTO::new);
     }
 
     @GetMapping(value = "/spot/{oid}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PayloadResponse<StockPriceDTO>> spot(@PathVariable("oid") int oid) {
         var ticker = new StockTicker(oid);
         var price = core.getStockPrice(ticker);
-        return ApiUtil.mapWithErrFn(price, StockPriceDTO::new);
+        return ApiUtil.mapWithFn(price, StockPriceDTO::new);
     }
 
     @GetMapping(value = "/calls/{oid}", produces = MediaType.APPLICATION_JSON_VALUE)

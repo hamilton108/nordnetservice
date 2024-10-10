@@ -16,7 +16,9 @@ import java.util.function.Function;
 
 public class ApiUtil {
 
-    public static ResponseEntity<DefaultResponse> mapWithErrFn(@NonNull Optional<ApplicationError> err, HttpStatus errorStatus, String okMsg) {
+    public static ResponseEntity<DefaultResponse> mapWithErrFn(@NonNull Optional<ApplicationError> err,
+                                                               HttpStatus errorStatus,
+                                                               String okMsg) {
         return err.map(r ->
                 ResponseEntity
                         .status(errorStatus)
@@ -28,7 +30,9 @@ public class ApiUtil {
         );
     }
 
-    public static <Q,T> ResponseEntity<PayloadResponse<T>> mapWithErrFn(Either<ApplicationError,Q> result, Function<Q,T> fn, T inCaseOfError) {
+    public static <Q,T> ResponseEntity<PayloadResponse<T>> mapWithErrFn(@NonNull Either<ApplicationError,Q> result,
+                                                                        Function<Q,T> fn,
+                                                                        T inCaseOfError) {
         if (result.isRight()) {
             var result1 = fn.apply(result.getRight());
             return ResponseEntity
@@ -41,11 +45,12 @@ public class ApiUtil {
                     .body(new PayloadResponse<T>(inCaseOfError, AppStatusCode.GENERAL_ERROR, mapErr2str(result.getLeft())));
         }
     }
-    public static <Q,T> ResponseEntity<PayloadResponse<T>> mapWithErrFn(Either<ApplicationError,Q> result, Function<Q,T> fn) {
+
+    public static <Q,T> ResponseEntity<PayloadResponse<T>> mapWithFn(@NonNull Either<ApplicationError,Q> result, Function<Q,T> fn) {
         return mapWithErrFn(result,fn,null);
     }
 
-    public static <T> ResponseEntity<PayloadResponse<T>> mapWithDefault(Either<ApplicationError,T> result, T inCaseOfError) {
+    public static <T> ResponseEntity<PayloadResponse<T>> mapWithDefault(@NonNull Either<ApplicationError,T> result, T inCaseOfError) {
         if (result.isRight()) {
             return ResponseEntity
                     .status(HttpStatus.OK)
@@ -56,11 +61,11 @@ public class ApiUtil {
         }
     }
 
-    public static <T> ResponseEntity<PayloadResponse<T>> map(Either<ApplicationError,T> result) {
+    public static <T> ResponseEntity<PayloadResponse<T>> map(@NonNull Either<ApplicationError,T> result) {
         return mapWithDefault(result, null);
     }
 
-    public static <T> ResponseEntity<PayloadResponse<T>> mapAppError(ApplicationError appError, T inCaseOfError) {
+    public static <T> ResponseEntity<PayloadResponse<T>> mapAppError(@NonNull ApplicationError appError, T inCaseOfError) {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(new PayloadResponse<T>(inCaseOfError, AppStatusCode.GENERAL_ERROR, mapErr2str(appError)));
