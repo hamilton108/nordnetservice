@@ -58,6 +58,7 @@ public class DefaultDownloaderAdapter  implements  Downloader<PageInfo> {
             var url = NordnetUtil.urlFor(ticker, nordnetMillis);
             var req =
                     HttpRequest.newBuilder(url.toURI()).GET().build();
+            //var h = new HttpHead(url.toString());
             HttpResponse<String> response = getClient().send(req, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != HttpStatus.SC_OK) {
                 throw new DownloadException(url, response.statusCode());

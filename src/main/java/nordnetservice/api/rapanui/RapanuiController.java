@@ -2,6 +2,8 @@ package nordnetservice.api.rapanui;
 
 import nordnetservice.api.rapanui.response.FindOptionItem;
 import nordnetservice.api.rapanui.response.FindOptionResponse;
+import nordnetservice.api.response.AppStatusCode;
+import nordnetservice.api.response.DefaultResponse;
 import nordnetservice.api.response.PayloadResponse;
 import nordnetservice.api.util.ApiUtil;
 import nordnetservice.domain.core.Core;
@@ -9,11 +11,9 @@ import nordnetservice.domain.stockoption.StockOptionTicker;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "http://localhost:8080")
 @Controller
 @RequestMapping("/rapanui")
 public class RapanuiController {
@@ -38,5 +38,13 @@ public class RapanuiController {
                     opt.getOpType().getValue());
         });
 
+    }
+
+    @ResponseBody
+    @GetMapping(value = "/toggleAccrule/{oid}/{isActive}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<DefaultResponse> toggleAccRule(@PathVariable("oid") int oid,
+                                                         @PathVariable("isActive") boolean isActive) {
+        System.out.println(String.format("oid: %d, isActive: %s", oid,isActive));
+        return ResponseEntity.ok(new DefaultResponse(AppStatusCode.OK, "ok"));
     }
 }

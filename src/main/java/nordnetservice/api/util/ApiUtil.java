@@ -42,7 +42,7 @@ public class ApiUtil {
         else {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(new PayloadResponse<T>(inCaseOfError, AppStatusCode.GENERAL_ERROR, mapErr2str(result.getLeft())));
+                    .body(new PayloadResponse<T>(inCaseOfError, appErrToAppStatusCode(result.getLeft()), mapErr2str(result.getLeft())));
         }
     }
 
@@ -71,11 +71,20 @@ public class ApiUtil {
                 .body(new PayloadResponse<T>(inCaseOfError, AppStatusCode.GENERAL_ERROR, mapErr2str(appError)));
     }
 
+    public static AppStatusCode appErrToAppStatusCode(ApplicationError err) {
+        return switch (err) {
+            case SqlError.DuplicateKeyError e -> AppStatusCode.DUPLICATE_KEY_ERROR;
+            case SqlError.GeneralSqlError e -> AppStatusCode.GENERAL_SQL_ERROR;
+            case SqlError.MybatisSqlError e -> AppStatusCode.MYBATIS_SQL_ERROR;
+            case GeneralError.GeneralApplicationError e -> AppStatusCode.GENERAL_ERROR;
+        };
+    }
+
     public static DefaultResponse mapError(ApplicationError err) {
         return switch (err) {
-            case SqlError.DuplicateKeyError e -> new DefaultResponse(AppStatusCode.GENERAL_ERROR, mapErr2str(err));
-            case SqlError.GeneralSqlError e -> new DefaultResponse(AppStatusCode.GENERAL_ERROR, mapErr2str(err));
-            case SqlError.MybatisSqlError e -> new DefaultResponse(AppStatusCode.GENERAL_ERROR, mapErr2str(err));
+            case SqlError.DuplicateKeyError e -> new DefaultResponse(AppStatusCode.DUPLICATE_KEY_ERROR, mapErr2str(err));
+            case SqlError.GeneralSqlError e -> new DefaultResponse(AppStatusCode.GENERAL_SQL_ERROR, mapErr2str(err));
+            case SqlError.MybatisSqlError e -> new DefaultResponse(AppStatusCode.MYBATIS_SQL_ERROR, mapErr2str(err));
             case GeneralError.GeneralApplicationError e -> new DefaultResponse(AppStatusCode.GENERAL_ERROR, mapErr2str(err));
         };
     }

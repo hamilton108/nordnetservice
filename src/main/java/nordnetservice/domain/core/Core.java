@@ -45,10 +45,6 @@ public class Core {
     private interface HandleEitherCommand<T> {
         T handle() throws Exception;
     };
-    @FunctionalInterface
-    private interface HandleOptionalCommand<T> {
-        T handle() throws Exception;
-    };
      */
 
     private <T> Either<ApplicationError,T> handle(Supplier<T> fn) {
@@ -64,7 +60,8 @@ public class Core {
             }
         }
         catch (Exception ex) {
-            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
+            return Either.left(new GeneralError.GeneralApplicationError(
+                    String.format("(%s) %s", ex.getClass().getSimpleName(),ex.getMessage())));
         }
     }
 
@@ -74,73 +71,22 @@ public class Core {
 
     public Either<ApplicationError,List<StockOptionPurchase>> fetchCritters(PurchaseType purchaseType) {
         return handle(() -> critterAdapter.fetchCritters(purchaseType));
-        /*
-        try {
-            return Either.right(critterAdapter.fetchCritters(purchaseType));
-        }
-        catch (MyBatisSystemException ex) {
-            if (ex.getMessage() == null) {
-                return Either.left(new SqlError.MybatisSqlError(ex.getCause().getMessage()));
-            }
-            else {
-                return Either.left(new SqlError.MybatisSqlError(ex.getMessage()));
-            }
-        }
-        catch (Exception ex) {
-            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
-        }
-
-         */
     }
+
     public Either<ApplicationError,List<StockOption>> getCalls(StockTicker ticker) {
         return handle(() -> nordnetRepository.getCalls(ticker));
-        /*
-        try {
-            return Either.right(nordnetRepository.getCalls(ticker));
-        }
-        catch (Exception ex) {
-            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
-        }
-
-         */
     }
 
     public Either<ApplicationError,List<StockOption>> getPuts(StockTicker ticker) {
         return handle(() -> nordnetRepository.getPuts(ticker));
-        /*
-        try {
-            return Either.right(nordnetRepository.getPuts(ticker));
-        }
-        catch (Exception ex) {
-            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
-        }
-
-         */
     }
+
     public Either<ApplicationError,StockPrice> getStockPrice(StockTicker ticker) {
         return handle(() -> nordnetRepository.getStockPrice(ticker));
-        /*
-        try {
-            return Either.right(nordnetRepository.getStockPrice(ticker));
-        }
-        catch (Exception ex) {
-            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
-        }
-
-         */
     }
 
     public Either<ApplicationError,OpeningPrice> openingPrice(StockTicker ticker) {
         return handle(() -> nordnetRepository.openingPrice(ticker));
-        /*
-        try {
-            return Either.right(nordnetRepository.openingPrice(ticker));
-        }
-        catch (Exception ex) {
-            return Either.left(new GeneralError.GeneralApplicationError(ex.getMessage()));
-        }
-
-         */
     }
 
     public Optional<ApplicationError> thirdFridayMillis(List<YearMonthDTO> items) {
